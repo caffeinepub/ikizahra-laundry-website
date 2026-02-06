@@ -1,0 +1,58 @@
+{
+  "kind": "implementation_plan",
+  "version": "1.0",
+  "title": "Support unlimited-length gallery descriptions (display + editing)",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "summary": "Remove gallery description truncation and ensure safe multi-line wrapping for public, admin, and featured gallery cards.",
+      "acceptanceCriteria": [
+        "Gallery descriptions are no longer limited to 2 lines anywhere they are displayed.",
+        "Very long descriptions render fully (multi-line) without being visually cut off.",
+        "Long unbroken strings do not overflow the card layout (they wrap/break safely)."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/FeaturedGallery.tsx",
+          "operation": "modify",
+          "description": "Update featured gallery card description rendering to remove any truncation classes (e.g., line-clamp) and apply multi-line wrapping with safe word-breaking and line-break preservation (e.g., whitespace-pre-wrap + break-words) so very long descriptions display fully."
+        },
+        {
+          "path": "frontend/src/components/GalleryDisplay.tsx",
+          "operation": "modify",
+          "description": "Update public gallery card description rendering to remove truncation (e.g., line-clamp) and ensure descriptions wrap across multiple lines with safe word-breaking and preserved line breaks so long/paragraph text and unbroken strings do not overflow."
+        },
+        {
+          "path": "frontend/src/components/GalleryManagementPage.tsx",
+          "operation": "modify",
+          "description": "Update admin gallery management card description rendering (and any other gallery description previews in this page) to remove truncation and ensure full multi-line rendering with safe word-breaking and preserved line breaks."
+        }
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "summary": "Make all description editing inputs comfortable for long multi-paragraph text and remove any client-side length limits.",
+      "acceptanceCriteria": [
+        "Admins can paste/type long descriptions (multiple paragraphs) into description fields and save successfully.",
+        "No description input field enforces a small/short maximum length via the UI."
+      ],
+      "file_operations": [
+        {
+          "path": "frontend/src/components/FeaturedGallery.tsx",
+          "operation": "modify",
+          "description": "Ensure all description editing inputs in FeaturedGallery (edit description dialog and upload description field) use multiline Textarea with comfortable sizing (more rows/min-height and optional resize) and verify there is no maxLength or other UI-enforced limit that blocks long descriptions."
+        },
+        {
+          "path": "frontend/src/components/GalleryDisplay.tsx",
+          "operation": "modify",
+          "description": "Ensure the gallery description edit dialog input uses a multiline Textarea sized for long text entry (rows/min-height, optional resize) and verify there is no maxLength or other UI-enforced limit for description editing."
+        },
+        {
+          "path": "frontend/src/components/GalleryManagementPage.tsx",
+          "operation": "modify",
+          "description": "Ensure all description editing inputs in gallery management (edit description dialog and upload description field) use multiline Textarea sized for long multi-paragraph entry (rows/min-height, optional resize) and verify there is no maxLength or other UI-enforced limit."
+        }
+      ]
+    }
+  ]
+}

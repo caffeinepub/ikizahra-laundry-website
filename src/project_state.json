@@ -1,0 +1,341 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "Ikizahra Laundry Website is a full-stack Internet Computer (Motoko canister) + React/TypeScript web application for a laundry business. It provides a public marketing site (hero banner, gallery, services/pricing, contact section, footer) and a set of admin-only management capabilities gated by Internet Identity + RBAC. Admins can manage service catalogs (online and in-store subcategories), upload and manage images (hero and gallery, plus per-service images) with client-side processing (crop to aspect ratio + JPEG compression) and upload progress, edit image descriptions, configure background pattern/theme settings stored in the canister, and update contact information. The backend also includes a Caffeine blob-storage mixin for blob lifecycle/cleanup workflows and gateway authorization management.",
+  "existing_features": [
+    {
+      "id": "IF-1",
+      "title": "Internet Identity authentication provider",
+      "synonyms": [
+        "II auth",
+        "AuthClient provider",
+        "InternetIdentityProvider"
+      ],
+      "description": "Provides a React context around @dfinity/auth-client to initialize/load stored sessions, login via Internet Identity, logout/clear identity, and expose detailed login status flags.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-2",
+      "title": "Login/logout UI with cache clearing",
+      "synonyms": [
+        "LoginButton",
+        "auth button"
+      ],
+      "description": "Renders a login/logout button that triggers Internet Identity login or logout; clears the React Query cache on logout to remove identity-scoped data.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-3",
+      "title": "Identity-aware canister actor creation and refresh",
+      "synonyms": [
+        "useActor",
+        "actor factory"
+      ],
+      "description": "Creates an anonymous canister actor when unauthenticated and an identity-backed actor when authenticated; calls initializeAccessControl on authenticated actor creation and invalidates/refetches all other queries when the actor changes.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-4",
+      "title": "Role-based access control (admin/user/guest)",
+      "synonyms": [
+        "RBAC",
+        "AccessControl"
+      ],
+      "description": "Motoko AccessControl assigns roles (first initialized principal becomes admin, subsequent principals become users) and enforces permission checks for admin-only endpoints; includes endpoints to query caller role/admin status and assign roles to other principals.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-5",
+      "title": "User profile storage and first-login profile setup modal",
+      "synonyms": [
+        "caller profile",
+        "ProfileSetup"
+      ],
+      "description": "Authenticated users can save and retrieve a simple profile (name, phoneNumber). The frontend prompts users to complete their profile when authenticated and no profile exists.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-6",
+      "title": "Public services listing with pricing and WhatsApp ordering links",
+      "synonyms": [
+        "ServicesWithPricing",
+        "service cards",
+        "wa.me order"
+      ],
+      "description": "Fetches services by category/subcategory and renders responsive service cards with IDR currency formatting and a per-service WhatsApp deep link containing a prefilled Indonesian order message.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-7",
+      "title": "Admin CRUD for online services",
+      "synonyms": [
+        "createService",
+        "updateService",
+        "deleteService"
+      ],
+      "description": "Admins can create, edit, and delete services in the online category; the UI provides dialogs for add/edit/delete and refreshes cached service queries after mutations.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-8",
+      "title": "Admin CRUD for in-store services by subcategory",
+      "synonyms": [
+        "StoreSubcategoryService",
+        "selfService/operatorService"
+      ],
+      "description": "Admins can create, edit, and delete in-store services split into selfService and operatorService subcategories; the UI renders the two subcategories separately and refreshes cached queries after mutations.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-9",
+      "title": "Admin service image upload (online and in-store) with processing and progress",
+      "synonyms": [
+        "uploadProcessedServiceImage",
+        "uploadProcessedStoreSubcategoryServiceImage"
+      ],
+      "description": "Admins can upload a processed image for a service; the frontend validates and crops/compresses to a selected aspect ratio, then uploads via ExternalBlob with progress tracking; the processed image metadata is stored on the service record.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-10",
+      "title": "Public gallery display with admin caption editing",
+      "synonyms": [
+        "GalleryDisplay",
+        "updateImageDescription"
+      ],
+      "description": "Displays gallery-type images in a responsive grid with hover effects; admins can edit an image description via a dialog and updates invalidate image queries so changes appear immediately.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-11",
+      "title": "Admin gallery management (upload, replace, delete, edit descriptions)",
+      "synonyms": [
+        "GalleryManagementPage",
+        "gallery admin UI"
+      ],
+      "description": "Provides an admin-only page to manage gallery images: upload new images with selectable aspect ratio, replace an existing photo while preserving metadata, delete images with confirmation, and edit descriptions. Upload/replace flows include client-side processing and upload progress with cache invalidation to refresh the gallery instantly.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-12",
+      "title": "Hero banner image retrieval and admin editor",
+      "synonyms": [
+        "Hero",
+        "HeroBannerEditor",
+        "uploadHeroImage"
+      ],
+      "description": "The hero section loads the latest hero-type processed image from the backend (fallback to a local asset). Admins can open a dialog to upload a new hero banner image with aspect ratio selection, description, client-side processing, and progress tracking.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-13",
+      "title": "Processed image model and image APIs",
+      "synonyms": [
+        "ProcessedImage",
+        "getImagesByType",
+        "getOrderedGalleryImages",
+        "getAllProcessedImages"
+      ],
+      "description": "Backend defines a ProcessedImage type (blob + metadata such as aspect ratio, size, dimensions, type) and exposes APIs to list images, filter by type, upload images for several types (gallery/hero/logo/contact background), and update descriptions (admin-only where applicable).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-14",
+      "title": "Contact information (public read, admin update)",
+      "synonyms": [
+        "ContactInfo",
+        "AdminPanel contact editor"
+      ],
+      "description": "Backend stores contact info (phone, WhatsApp link, address, hours) readable publicly and editable by admins. The AdminPanel includes an edit dialog and invalidates the contactInfo query on save.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-15",
+      "title": "Contact form submission and admin viewing APIs",
+      "synonyms": [
+        "submitContactForm",
+        "getAllContactFormEntries"
+      ],
+      "description": "Backend supports storing contact form entries (name/phone/message) and admin-only retrieval of entries. Frontend query/mutation hooks exist for submission and admin listing (UI usage may vary).",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-16",
+      "title": "Background theme customization persisted in canister",
+      "synonyms": [
+        "BackgroundTheme",
+        "pattern overlay settings"
+      ],
+      "description": "Admins can configure background pattern type, base color, transparency, and intensity stored in the canister. The frontend applies these as CSS variables and pattern classes (bubbles/fabric/ripples) to site sections.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-17",
+      "title": "Client-side primary theme hue customization (localStorage)",
+      "synonyms": [
+        "theme hue presets",
+        "OKLCH CSS variables"
+      ],
+      "description": "AdminPanel provides preset and custom hue controls that update OKLCH-based CSS variables for site theming and persist the selected hue to localStorage.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-18",
+      "title": "Customer photo upload with progress and admin-only retrieval endpoints",
+      "synonyms": [
+        "uploadCustomerPhoto",
+        "customer photos"
+      ],
+      "description": "Public UI allows users to upload a photo with client-side validation, preview, and progress tracking via ExternalBlob. Backend stores uploaded photos and provides admin-only endpoints to fetch a photo by id and list all photo IDs.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-19",
+      "title": "Centralized React Query hook layer for canister operations",
+      "synonyms": [
+        "useQueries",
+        "query/mutation hooks"
+      ],
+      "description": "Implements a comprehensive set of typed query/mutation hooks covering profiles, admin checks, services, images (upload/update/delete/replace), contact info, contact submissions, background theme, and customer photo upload, with consistent cache invalidation.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-20",
+      "title": "Client-side image processing utilities (aspect-ratio crop + compression)",
+      "synonyms": [
+        "imageProcessor",
+        "canvas processing"
+      ],
+      "description": "Utilities validate image files (type/size), format file sizes, and process images into fixed aspect ratios (1:1, 4:3, 9:16) using Canvas with JPEG compression; returns bytes and metadata used by upload flows.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-21",
+      "title": "Blob-storage maintenance endpoints via Caffeine storage mixin",
+      "synonyms": [
+        "_caffeineStorage* endpoints",
+        "dead blob pruning"
+      ],
+      "description": "Includes mixin endpoints for checking blob liveness, listing dead blobs (authorized gateways only), confirming deletions (pruning + GC trigger), refreshing gateway principals via a cashier canister, and refilling the cashier with cycles under strict caller checks.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-22",
+      "title": "Header navigation and gallery-management view toggle (event-based)",
+      "synonyms": [
+        "Header",
+        "galleryPageChange CustomEvent"
+      ],
+      "description": "Implements fixed responsive navigation with smooth scrolling to sections and an event-based toggle that switches GalleryDisplay into the admin GalleryManagementPage without introducing a router.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-23",
+      "title": "URL parameter and hash-secret utilities",
+      "synonyms": [
+        "urlParams",
+        "session parameter helpers"
+      ],
+      "description": "Provides helpers to read URL params from query or hash, persist values to sessionStorage, and extract+clear sensitive parameters from the hash fragment to reduce leakage risk.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "IF-24",
+      "title": "Responsive marketing site composition and styling",
+      "synonyms": [
+        "App layout",
+        "Tailwind + shadcn UI",
+        "luxury gradients"
+      ],
+      "description": "Composes the end-to-end site layout (Header, Hero, Gallery, Services, Contact, AdminPanel, Footer) and applies Tailwind-based responsive styling, OKLCH theme variables, reusable gradient utilities, and patterned section overlays.",
+      "reqIds": [],
+      "version": 1
+    },
+    {
+      "id": "feature-update-all-gallery-image-description-displays-to-support-very-long-text-without-being-cut-off-remove-any-ui-truncation-e-g-tailwind-line-clamp-and-ensure-descriptions-wrap-across-multiple-lines-use-word-breaking-and-preserve-line-breaks-where-relevant-this-applies-to-public-gallery-cards-admin-gallery-management-cards-and-featured-gallery-cards",
+      "title": "Update all gallery image description displays to support very long text without being cut off. Remove any UI truncation (e.g., Tailwind `line-clamp-*`) and ensure descriptions wrap across multiple lines (use word-breaking and preserve line breaks where relevant). This applies to: public gallery cards, admin gallery management cards, and featured gallery cards.",
+      "reqIds": [
+        "REQ-1"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-ensure-all-description-editing-inputs-support-long-multi-sentence-text-comfortably-use-multiline-inputs-everywhere-descriptions-are-edited-and-ensure-there-is-no-client-side-maxlength-or-other-artificial-limit-that-prevents-long-descriptions-from-being-entered-and-saved",
+      "title": "Ensure all description editing inputs support long, multi-sentence text comfortably. Use multiline inputs everywhere descriptions are edited and ensure there is no client-side `maxLength` or other artificial limit that prevents long descriptions from being entered and saved.",
+      "reqIds": [
+        "REQ-2"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Allow much longer (effectively unlimited) text in all editable descriptions (gallery image descriptions, service descriptions, page/below-section descriptions) so sentences are not cut off; update UI to use multiline inputs and backend/storage limits accordingly.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-2",
+      "summary": "Add per-service 'Pesan' / order button on each price-list item (online + in-place categories) that deep-links to WhatsApp with prefilled message for the selected service.",
+      "reqIds": [],
+      "status": "pending"
+    },
+    {
+      "id": "AR-3",
+      "summary": "Replace/remove the bottom 'Kirim Pesan' customer contact form section and instead show a same-sized customer photo upload/gallery section (upload + manage images) in that area, without removing other existing features/content.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "architectural_notes": [
+    "Frontend uses React + TypeScript with @tanstack/react-query; all canister calls are wrapped in typed query/mutation hooks (frontend/src/hooks/useQueries.ts) with explicit cache invalidation.",
+    "Authentication is implemented via DFINITY Internet Identity using @dfinity/auth-client, exposed through a React context provider (InternetIdentityProvider).",
+    "A dedicated actor hook (useActor) creates either an anonymous or identity-backed canister actor; on authenticated creation it calls initializeAccessControl, and on actor changes it invalidates/refetches other queries.",
+    "UI is built with TailwindCSS (OKLCH CSS variables) and shadcn/ui components; the site uses reusable gradient/pattern utilities for a consistent “luxury” theme.",
+    "Images are processed client-side using Canvas (object-fit: cover crop to chosen aspect ratio, then JPEG compression) and uploaded as ExternalBlob with progress callbacks.",
+    "Backend is a single Motoko canister storing state in mo:core/Map structures and enforcing permissions via an AccessControl module.",
+    "Backend includes a blob-storage mixin (backend/blob-storage/Mixin.mo) exposing maintenance endpoints for dead-blob listing, deletion confirmation, gateway principal refresh, and cycles top-ups via a cashier canister.",
+    "Navigation to the gallery admin page is done without a router using a CustomEvent (galleryPageChange) dispatched by Header and consumed by GalleryDisplay."
+  ],
+  "known_issues": [
+    "Backend ID generation is inconsistent and can collide/reuse IDs after deletions: services and many image uploads use map.size()+1 (e.g., uploadHeroImage/uploadLogoImage), while gallery uploads use nextGalleryImageId; none are initialized from existing state on upgrade.",
+    "submitContactForm likely returns an incorrect ID: it inserts using contactEntries.size()+1 and then returns contactEntries.size()+1 again after insertion (off-by-one / mismatch risk).",
+    "getOrderedGalleryImages does not actually order results and returns all processed images in Map iteration order (not guaranteed), despite the name implying ordering and “gallery-only” semantics.",
+    "deleteGalleryImage only removes the metadata record; it does not ensure the underlying blob is pruned/removed, so the previous blob may remain accessible depending on storage semantics and pruning workflows.",
+    "deleteGalleryImage and replaceGalleryImage do not validate that the target record is a gallery image (imageType); they can be called with any ProcessedImage id and may delete/overwrite non-gallery records.",
+    "Contact UI shows hardcoded visible phone/address/hours strings; backend updates to ContactInfo may not fully reflect in displayed text (links partly use contactInfo, but displayed text does not).",
+    "GalleryManagementPage does not revoke created object URLs on reset/close for previewUrl/replacePreviewUrl, which can cause memory leaks during repeated uploads/replacements.",
+    "Access control bootstrapping makes the first authenticated principal to call initializeAccessControl the admin; if an unintended principal initializes first, admin ownership can be hijacked.",
+    "Public uploadCustomerPhoto endpoint has no rate limiting/abuse protection and minimal server-side validation (client validates type/size, but backend accepts arbitrary blobs).",
+    "Blob-storage gateway authorization list is stored in transient state; after deployment/upgrade it may be empty until _caffeineStorageUpdateGatewayPrincipals is called, causing pruning/listing endpoints to trap as unauthorized."
+  ],
+  "isFixRequest": true,
+  "gameProjectType": "none",
+  "projectName": "Ikizahra Laundry Website",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

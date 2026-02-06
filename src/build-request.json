@@ -1,0 +1,53 @@
+{
+  "kind": "build_request",
+  "title": "Allow very long descriptions without truncation (gallery + other description fields)",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-1",
+      "text": "Update all gallery image description displays to support very long text without being cut off. Remove any UI truncation (e.g., Tailwind `line-clamp-*`) and ensure descriptions wrap across multiple lines (use word-breaking and preserve line breaks where relevant). This applies to: public gallery cards, admin gallery management cards, and featured gallery cards.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-10"
+        ],
+        "quotes": [
+          "Saya ingin di tiap2 deskripsi nya muat kalimat banyak tak terbatas  jangan terlalu pendek muat kata2 nya"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Gallery descriptions are no longer limited to 2 lines anywhere they are displayed.",
+        "Very long descriptions render fully (multi-line) without being visually cut off.",
+        "Long unbroken strings do not overflow the card layout (they wrap/break safely)."
+      ]
+    },
+    {
+      "id": "REQ-2",
+      "text": "Ensure all description editing inputs support long, multi-sentence text comfortably. Use multiline inputs everywhere descriptions are edited and ensure there is no client-side `maxLength` or other artificial limit that prevents long descriptions from being entered and saved.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "msg-10"
+        ],
+        "quotes": [
+          "muat kalimat banyak tak terbatas"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admins can paste/type long descriptions (multiple paragraphs) into description fields and save successfully.",
+        "No description input field enforces a small/short maximum length via the UI."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not edit files in frontend immutable paths: frontend/src/hooks/useInternetIdentity.ts, frontend/src/hooks/useInternetIdentity.tsx, frontend/src/hooks/useActor.ts, frontend/src/main.tsx, frontend/src/components/ui"
+  ],
+  "nonGoals": [
+    "Do not change authentication, roles, or admin gating behavior.",
+    "Do not redesign unrelated sections (services pricing, contact, theme) beyond what is necessary to display long descriptions."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

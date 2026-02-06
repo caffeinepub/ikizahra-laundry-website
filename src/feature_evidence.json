@@ -1,0 +1,49 @@
+{
+  "kind": "feature_evidence_report",
+  "features": [
+    {
+      "featureId": "feature-update-all-gallery-image-description-displays-to-support-very-long-text-without-being-cut-off-remove-any-ui-truncation-e-g-tailwind-line-clamp-and-ensure-descriptions-wrap-across-multiple-lines-use-word-breaking-and-preserve-line-breaks-where-relevant-this-applies-to-public-gallery-cards-admin-gallery-management-cards-and-featured-gallery-cards",
+      "featureTitle": "Update all gallery image description displays to support very long text without being cut off. Remove any UI truncation (e.g., Tailwind `line-clamp-*`) and ensure descriptions wrap across multiple lines (use word-breaking and preserve line breaks where relevant). This applies to: public gallery cards, admin gallery management cards, and featured gallery cards.",
+      "files": [
+        "frontend/src/components/FeaturedGallery.tsx",
+        "frontend/src/components/GalleryDisplay.tsx",
+        "frontend/src/components/GalleryManagementPage.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-1"
+      ],
+      "confidence": "high"
+    },
+    {
+      "featureId": "feature-ensure-all-description-editing-inputs-support-long-multi-sentence-text-comfortably-use-multiline-inputs-everywhere-descriptions-are-edited-and-ensure-there-is-no-client-side-maxlength-or-other-artificial-limit-that-prevents-long-descriptions-from-being-entered-and-saved",
+      "featureTitle": "Ensure all description editing inputs support long, multi-sentence text comfortably. Use multiline inputs everywhere descriptions are edited and ensure there is no client-side `maxLength` or other artificial limit that prevents long descriptions from being entered and saved.",
+      "files": [
+        "frontend/src/components/FeaturedGallery.tsx",
+        "frontend/src/components/GalleryDisplay.tsx",
+        "frontend/src/components/GalleryManagementPage.tsx"
+      ],
+      "components": [
+        "authorization@3.0.0",
+        "blob-storage@4.0.0",
+        "core-infrastructure@1.0.2",
+        "shadcn-ui@1.0.0",
+        "build-template-react@1.0.0",
+        "initial-app@1.0.0",
+        "github-export-icp-cli@1.0.0"
+      ],
+      "testIds": [
+        "REQ-2"
+      ],
+      "confidence": "high"
+    }
+  ]
+}

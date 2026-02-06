@@ -1,0 +1,332 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --radius: 0.75rem;
+        --background: 0.99 0 0;
+        --foreground: 0.2 0 0;
+        --card: 1 0 0;
+        --card-foreground: 0.2 0 0;
+        --popover: 1 0 0;
+        --popover-foreground: 0.2 0 0;
+        --primary: 0.55 0.18 200;
+        --primary-foreground: 0.99 0 0;
+        --secondary: 0.92 0.08 180;
+        --secondary-foreground: 0.2 0 0;
+        --muted: 0.96 0.01 200;
+        --muted-foreground: 0.5 0.02 200;
+        --accent: 0.88 0.12 160;
+        --accent-foreground: 0.2 0 0;
+        --destructive: 0.577 0.245 27.325;
+        --destructive-foreground: 0.99 0 0;
+        --border: 0.9 0.02 200;
+        --input: 0.9 0.02 200;
+        --ring: 0.55 0.18 200;
+        --chart-1: 0.55 0.18 200;
+        --chart-2: 0.65 0.15 160;
+        --chart-3: 0.7 0.12 140;
+        --chart-4: 0.6 0.16 220;
+        --chart-5: 0.5 0.2 180;
+        --sidebar: 0.99 0 0;
+        --sidebar-foreground: 0.2 0 0;
+        --sidebar-primary: 0.55 0.18 200;
+        --sidebar-primary-foreground: 0.99 0 0;
+        --sidebar-accent: 0.96 0.01 200;
+        --sidebar-accent-foreground: 0.2 0 0;
+        --sidebar-border: 0.9 0.02 200;
+        --sidebar-ring: 0.55 0.18 200;
+        
+        /* Enhanced luxury gradient colors - BRIGHTER & MORE VIVID */
+        --gradient-blue-start: oklch(0.88 0.15 220);
+        --gradient-blue-mid: oklch(0.85 0.18 200);
+        --gradient-blue-end: oklch(0.82 0.22 180);
+        --gradient-mint-start: oklch(0.87 0.16 160);
+        --gradient-mint-mid: oklch(0.84 0.20 150);
+        --gradient-mint-end: oklch(0.80 0.24 140);
+        --gradient-beige-start: oklch(0.90 0.12 80);
+        --gradient-beige-mid: oklch(0.87 0.16 70);
+        --gradient-beige-end: oklch(0.84 0.20 60);
+        --gradient-gold-start: oklch(0.88 0.18 90);
+        --gradient-gold-mid: oklch(0.85 0.22 80);
+        --gradient-gold-end: oklch(0.82 0.26 70);
+        
+        /* Enhanced header brand gradient colors - MORE VIBRANT */
+        --header-gradient-start: oklch(0.65 0.25 220);
+        --header-gradient-mid: oklch(0.70 0.23 190);
+        --header-gradient-end: oklch(0.75 0.21 160);
+    }
+
+    .dark {
+        --background: 0.15 0.01 200;
+        --foreground: 0.95 0.01 200;
+        --card: 0.2 0.02 200;
+        --card-foreground: 0.95 0.01 200;
+        --popover: 0.18 0.02 200;
+        --popover-foreground: 0.95 0.01 200;
+        --primary: 0.65 0.18 200;
+        --primary-foreground: 0.15 0.01 200;
+        --secondary: 0.25 0.04 200;
+        --secondary-foreground: 0.95 0.01 200;
+        --muted: 0.25 0.03 200;
+        --muted-foreground: 0.65 0.03 200;
+        --accent: 0.3 0.08 180;
+        --accent-foreground: 0.95 0.01 200;
+        --destructive: 0.65 0.22 25;
+        --destructive-foreground: 0.95 0.01 200;
+        --border: 0.3 0.04 200;
+        --input: 0.3 0.04 200;
+        --ring: 0.65 0.18 200;
+        --chart-1: 0.65 0.18 200;
+        --chart-2: 0.7 0.15 160;
+        --chart-3: 0.75 0.12 140;
+        --chart-4: 0.6 0.2 220;
+        --chart-5: 0.55 0.22 180;
+        --sidebar: 0.2 0.02 200;
+        --sidebar-foreground: 0.95 0.01 200;
+        --sidebar-primary: 0.65 0.18 200;
+        --sidebar-primary-foreground: 0.15 0.01 200;
+        --sidebar-accent: 0.25 0.03 200;
+        --sidebar-accent-foreground: 0.95 0.01 200;
+        --sidebar-border: 0.3 0.04 200;
+        --sidebar-ring: 0.65 0.18 200;
+        
+        /* Enhanced luxury gradient colors for dark mode - BRIGHTER */
+        --gradient-blue-start: oklch(0.40 0.12 220);
+        --gradient-blue-mid: oklch(0.35 0.14 200);
+        --gradient-blue-end: oklch(0.30 0.16 180);
+        --gradient-mint-start: oklch(0.39 0.13 160);
+        --gradient-mint-mid: oklch(0.34 0.15 150);
+        --gradient-mint-end: oklch(0.29 0.17 140);
+        --gradient-beige-start: oklch(0.41 0.10 80);
+        --gradient-beige-mid: oklch(0.36 0.12 70);
+        --gradient-beige-end: oklch(0.31 0.14 60);
+        --gradient-gold-start: oklch(0.39 0.16 90);
+        --gradient-gold-mid: oklch(0.34 0.18 80);
+        --gradient-gold-end: oklch(0.29 0.20 70);
+        
+        /* Enhanced header brand gradient colors for dark mode */
+        --header-gradient-start: oklch(0.75 0.22 220);
+        --header-gradient-mid: oklch(0.80 0.20 190);
+        --header-gradient-end: oklch(0.85 0.18 160);
+    }
+
+    * {
+        @apply border-border;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+    
+    /* Enhanced luxury gradient backgrounds - BRIGHTER & MORE VIVID */
+    .gradient-luxury-blue {
+        background: linear-gradient(135deg, 
+            var(--gradient-blue-start) 0%, 
+            var(--gradient-blue-mid) 50%, 
+            var(--gradient-blue-end) 100%);
+    }
+    
+    .gradient-luxury-mint {
+        background: linear-gradient(135deg, 
+            var(--gradient-mint-start) 0%, 
+            var(--gradient-mint-mid) 50%, 
+            var(--gradient-mint-end) 100%);
+    }
+    
+    .gradient-luxury-beige {
+        background: linear-gradient(135deg, 
+            var(--gradient-beige-start) 0%, 
+            var(--gradient-beige-mid) 50%, 
+            var(--gradient-beige-end) 100%);
+    }
+    
+    .gradient-luxury-gold {
+        background: linear-gradient(135deg, 
+            var(--gradient-gold-start) 0%, 
+            var(--gradient-gold-mid) 50%, 
+            var(--gradient-gold-end) 100%);
+    }
+    
+    .gradient-luxury-blue-mint {
+        background: linear-gradient(135deg, 
+            var(--gradient-blue-start) 0%, 
+            var(--gradient-mint-mid) 50%, 
+            var(--gradient-mint-end) 100%);
+    }
+    
+    .gradient-luxury-mint-beige {
+        background: linear-gradient(135deg, 
+            var(--gradient-mint-start) 0%, 
+            var(--gradient-beige-mid) 50%, 
+            var(--gradient-beige-end) 100%);
+    }
+    
+    .gradient-luxury-beige-gold {
+        background: linear-gradient(135deg, 
+            var(--gradient-beige-start) 0%, 
+            var(--gradient-gold-mid) 50%, 
+            var(--gradient-gold-end) 100%);
+    }
+    
+    /* Radial gradients for cards - ENHANCED */
+    .gradient-radial-blue {
+        background: radial-gradient(circle at top left, 
+            var(--gradient-blue-start) 0%, 
+            var(--gradient-blue-mid) 50%, 
+            var(--gradient-blue-end) 100%);
+    }
+    
+    .gradient-radial-mint {
+        background: radial-gradient(circle at top right, 
+            var(--gradient-mint-start) 0%, 
+            var(--gradient-mint-mid) 50%, 
+            var(--gradient-mint-end) 100%);
+    }
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+/* Enhanced Header Brand Text Styling - MORE VIBRANT */
+.header-brand-text {
+    position: relative;
+    background: linear-gradient(135deg, 
+        var(--header-gradient-start) 0%, 
+        var(--header-gradient-mid) 50%, 
+        var(--header-gradient-end) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.4)) 
+            drop-shadow(0 1px 2px rgba(6, 182, 212, 0.3));
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+    font-family: 'Georgia', 'Times New Roman', serif;
+    letter-spacing: 0.05em;
+    transition: all 0.3s ease-in-out;
+}
+
+.header-brand-text::before {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    background: linear-gradient(135deg, 
+        oklch(0.80 0.18 220) 0%, 
+        oklch(0.83 0.16 190) 50%, 
+        oklch(0.86 0.14 160) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: blur(8px);
+    opacity: 0.5;
+}
+
+/* Responsive adjustments for header brand text */
+@media (max-width: 640px) {
+    .header-brand-text {
+        filter: drop-shadow(0 1px 2px rgba(59, 130, 246, 0.35)) 
+                drop-shadow(0 0.5px 1px rgba(6, 182, 212, 0.25));
+    }
+}
+
+@media (min-width: 1024px) {
+    .header-brand-text {
+        filter: drop-shadow(0 3px 6px rgba(59, 130, 246, 0.45)) 
+                drop-shadow(0 2px 4px rgba(6, 182, 212, 0.35));
+    }
+}
+
+/* Laundry-themed background patterns with enhanced luxury styling */
+.laundry-bg-pattern {
+    position: relative;
+}
+
+.laundry-bg-pattern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 0;
+    pointer-events: none;
+    opacity: var(--bg-pattern-opacity, 0.7);
+}
+
+/* Bubbles pattern */
+.laundry-bg-bubbles::before {
+    background-image: url('/assets/generated/laundry-bubbles-pattern-transparent.dim_400x400.png');
+    background-repeat: repeat;
+    background-size: calc(200px * var(--bg-pattern-intensity, 1));
+}
+
+/* Fabric texture pattern */
+.laundry-bg-fabric::before {
+    background-image: url('/assets/generated/fabric-texture-pattern-transparent.dim_400x400.png');
+    background-repeat: repeat;
+    background-size: calc(300px * var(--bg-pattern-intensity, 1));
+}
+
+/* Water ripples pattern */
+.laundry-bg-ripples::before {
+    background-image: url('/assets/generated/water-ripples-pattern-transparent.dim_400x400.png');
+    background-repeat: repeat;
+    background-size: calc(250px * var(--bg-pattern-intensity, 1));
+}
+
+/* Ensure content is above the pattern */
+.laundry-bg-pattern > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Luxury card styling with soft shadows */
+.luxury-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/20 shadow-lg;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.luxury-card:hover {
+    @apply shadow-xl;
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.2);
+}
+
+/* Smooth gradient text - MORE VIBRANT */
+.gradient-text {
+    background: linear-gradient(135deg, 
+        oklch(0.50 0.22 200) 0%, 
+        oklch(0.60 0.19 160) 50%, 
+        oklch(0.65 0.16 140) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Elegant button hover effects */
+.btn-luxury {
+    @apply transition-all duration-300 ease-in-out;
+    box-shadow: 0 4px 15px 0 rgba(31, 38, 135, 0.2);
+}
+
+.btn-luxury:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px 0 rgba(31, 38, 135, 0.3);
+}
+
+/* Responsive gradient adjustments */
+@media (max-width: 768px) {
+    .laundry-bg-bubbles::before,
+    .laundry-bg-fabric::before,
+    .laundry-bg-ripples::before {
+        background-size: calc(150px * var(--bg-pattern-intensity, 1));
+    }
+}

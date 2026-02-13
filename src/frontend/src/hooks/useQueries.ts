@@ -198,9 +198,34 @@ export function useUploadHeroImage() {
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orderedGalleryImages'] });
-      queryClient.invalidateQueries({ queryKey: ['imagesByType'] });
+      queryClient.invalidateQueries({ queryKey: ['imagesByType', ImageType.hero] });
     },
+  });
+}
+
+export function useGetAllServices() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<Service[]>({
+    queryKey: ['services'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllServices();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useGetAllStoreSubcategoryServices() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<StoreSubcategoryService[]>({
+    queryKey: ['storeSubcategoryServices'],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getAllStoreSubcategoryServices();
+    },
+    enabled: !!actor && !isFetching,
   });
 }
 
@@ -325,8 +350,8 @@ export function useUploadServiceImage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { 
-      id: bigint; 
+    mutationFn: async (data: {
+      id: bigint;
       image: ExternalBlob;
       aspectRatio: AspectRatioOption;
       fileSizeBytes: bigint;
@@ -335,7 +360,7 @@ export function useUploadServiceImage() {
     }) => {
       if (!actor) throw new Error('Actor not initialized');
       return actor.uploadProcessedServiceImage(
-        data.id, 
+        data.id,
         data.image,
         data.aspectRatio,
         data.fileSizeBytes,
@@ -355,8 +380,8 @@ export function useUploadStoreSubcategoryServiceImage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { 
-      id: bigint; 
+    mutationFn: async (data: {
+      id: bigint;
       image: ExternalBlob;
       aspectRatio: AspectRatioOption;
       fileSizeBytes: bigint;
@@ -365,7 +390,7 @@ export function useUploadStoreSubcategoryServiceImage() {
     }) => {
       if (!actor) throw new Error('Actor not initialized');
       return actor.uploadProcessedStoreSubcategoryServiceImage(
-        data.id, 
+        data.id,
         data.image,
         data.aspectRatio,
         data.fileSizeBytes,
@@ -383,10 +408,10 @@ export function useUploadStoreSubcategoryServiceImage() {
 export function useGetContactInfo() {
   const { actor, isFetching } = useActor();
 
-  return useQuery<ContactInfo | null>({
+  return useQuery<ContactInfo>({
     queryKey: ['contactInfo'],
     queryFn: async () => {
-      if (!actor) return null;
+      if (!actor) throw new Error('Actor not available');
       return actor.getContactInfo();
     },
     enabled: !!actor && !isFetching,
@@ -398,7 +423,7 @@ export function useUpdateContactInfo() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { phone: string; whatsapp: string; address: string; hours: string }) => {
+    mutationFn: async (data: ContactInfo) => {
       if (!actor) throw new Error('Actor not initialized');
       return actor.updateContactInfo(data.phone, data.whatsapp, data.address, data.hours);
     },
@@ -410,24 +435,20 @@ export function useUpdateContactInfo() {
 
 export function useSubmitContactForm() {
   const { actor } = useActor();
-  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (data: { name: string; phone: string; message: string }) => {
       if (!actor) throw new Error('Actor not initialized');
       return actor.submitContactForm(data.name, data.phone, data.message);
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contactFormSubmissions'] });
-    },
   });
 }
 
-export function useGetAllContactFormSubmissions() {
+export function useGetAllContactFormEntries() {
   const { actor, isFetching } = useActor();
 
   return useQuery<ContactFormEntry[]>({
-    queryKey: ['contactFormSubmissions'],
+    queryKey: ['contactFormEntries'],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllContactFormEntries();
@@ -449,7 +470,7 @@ export function useGetBackgroundTheme() {
   });
 }
 
-export function useUpdateBackgroundTheme() {
+export function useSetBackgroundTheme() {
   const { actor } = useActor();
   const queryClient = useQueryClient();
 
@@ -471,6 +492,49 @@ export function useUploadCustomerPhoto() {
     mutationFn: async (photo: ExternalBlob) => {
       if (!actor) throw new Error('Actor not initialized');
       return actor.uploadCustomerPhoto(photo);
+    },
+  });
+}
+
+export function useGetPhotoBackgroundImage() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<ExternalBlob | null>({
+    queryKey: ['photoBackgroundImage'],
+    queryFn: async () => {
+      if (!actor) return null;
+      return actor.getPhotoBackgroundImage();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useUploadPhotoBackgroundImage() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (blob: ExternalBlob) => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.uploadPhotoBackgroundImage(blob);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['photoBackgroundImage'] });
+    },
+  });
+}
+
+export function useRemovePhotoBackgroundImage() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      if (!actor) throw new Error('Actor not initialized');
+      return actor.removePhotoBackgroundImage();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['photoBackgroundImage'] });
     },
   });
 }

@@ -36,6 +36,7 @@ export const ImageType = IDL.Variant({
   'service' : IDL.Null,
   'hero' : IDL.Null,
   'logo' : IDL.Null,
+  'photoBackground' : IDL.Null,
   'contactBackground' : IDL.Null,
   'gallery' : IDL.Null,
 });
@@ -278,6 +279,7 @@ export const idlService = IDL.Service({
       [IDL.Vec(ProcessedImage)],
       ['query'],
     ),
+  'getPhotoBackgroundImage' : IDL.Func([], [IDL.Opt(ExternalBlob)], ['query']),
   'getService' : IDL.Func([IDL.Nat], [IDL.Opt(Service)], ['query']),
   'getServicesByCategory' : IDL.Func(
       [ServiceCategory],
@@ -306,6 +308,7 @@ export const idlService = IDL.Service({
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isDemoModeActive' : IDL.Func([], [IDL.Bool], ['query']),
   'isDemoStateSet' : IDL.Func([], [IDL.Bool], ['query']),
+  'removePhotoBackgroundImage' : IDL.Func([], [], []),
   'replaceGalleryImage' : IDL.Func(
       [
         IDL.Nat,
@@ -381,6 +384,7 @@ export const idlService = IDL.Service({
       [IDL.Nat],
       [],
     ),
+  'uploadPhotoBackgroundImage' : IDL.Func([ExternalBlob], [], []),
   'uploadProcessedContactBackgroundImage' : IDL.Func(
       [
         IDL.Opt(ExternalBlob),
@@ -466,6 +470,7 @@ export const idlFactory = ({ IDL }) => {
     'service' : IDL.Null,
     'hero' : IDL.Null,
     'logo' : IDL.Null,
+    'photoBackground' : IDL.Null,
     'contactBackground' : IDL.Null,
     'gallery' : IDL.Null,
   });
@@ -720,6 +725,11 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(ProcessedImage)],
         ['query'],
       ),
+    'getPhotoBackgroundImage' : IDL.Func(
+        [],
+        [IDL.Opt(ExternalBlob)],
+        ['query'],
+      ),
     'getService' : IDL.Func([IDL.Nat], [IDL.Opt(Service)], ['query']),
     'getServicesByCategory' : IDL.Func(
         [ServiceCategory],
@@ -748,6 +758,7 @@ export const idlFactory = ({ IDL }) => {
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isDemoModeActive' : IDL.Func([], [IDL.Bool], ['query']),
     'isDemoStateSet' : IDL.Func([], [IDL.Bool], ['query']),
+    'removePhotoBackgroundImage' : IDL.Func([], [], []),
     'replaceGalleryImage' : IDL.Func(
         [
           IDL.Nat,
@@ -827,6 +838,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Nat],
         [],
       ),
+    'uploadPhotoBackgroundImage' : IDL.Func([ExternalBlob], [], []),
     'uploadProcessedContactBackgroundImage' : IDL.Func(
         [
           IDL.Opt(ExternalBlob),

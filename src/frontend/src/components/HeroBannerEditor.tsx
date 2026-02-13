@@ -116,7 +116,7 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
       const processedImage = await processImageWithAspectRatio(
         selectedFile,
         selectedAspectRatio,
-        1920,
+        1440,
         0.90
       );
       

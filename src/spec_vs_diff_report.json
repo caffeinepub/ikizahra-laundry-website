@@ -1,16 +1,67 @@
 {
   "kind": "spec_vs_diff_report",
   "version": "1.0",
-  "generatedAt": "2026-02-05T01:08:57.743Z",
-  "summary": "The diff shows updates in gallery-related components that include use of multiline Textarea inputs for description editing, but the truncated snippets do not provide enough visible evidence to verify removal of all description truncation (e.g., line-clamp) and addition of safe wrapping/line-break preservation across all gallery description displays.",
-  "missing_requirements": [],
-  "hallucinated_features": [],
-  "confidence": 0.46,
+  "generatedAt": "2026-02-13T01:20:59.905Z",
+  "summary": "Diff adds a new backend image type (#photoBackground) with migration support, plus new frontend admin component and hooks to upload/remove a “Share Your Photo” background image and a localStorage-backed fit-mode setting. However, the provided diff summary is too truncated to confirm some key acceptance criteria (notably the exact fallback asset path and preservation of the existing overlay styling), and it also includes several unrelated UI/style enhancements not requested.",
+  "missing_requirements": [
+    {
+      "id": "REQ-4",
+      "requirement": "Fallback to the current static asset (/assets/generated/contact-woman-laundry.dim_800x600.jpg) when no custom image is set, and show uploaded image otherwise (stored in canister, persists across refresh).",
+      "reason": "While there are new hooks/components for a photo background image, the diff summary does not show where the “Share Your Photo” section actually renders the image nor any explicit fallback to the specified static asset path. The relevant rendering code is truncated/not shown.",
+      "evidence": [
+        "frontend/src/components/CustomerPhotoUploader.tsx (truncated)",
+        "frontend/src/components/Contact.tsx (not shown; only referenced in frontend-file-summaries.txt)",
+        "frontend/src/hooks/useQueries.ts (truncated)"
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "requirement": "Admin-only UI controls to upload/replace/remove the section image.",
+      "reason": "The new SharePhotoBackgroundManager component exists and is wired into AdminPanel, but the truncated diff does not show an explicit admin-gate (e.g., via useIsCallerAdmin or a backend permission check) around these controls, so it cannot be verified from the provided evidence.",
+      "evidence": [
+        "frontend/src/components/SharePhotoBackgroundManager.tsx (truncated)",
+        "frontend/src/components/AdminPanel.tsx (truncated)",
+        "frontend/src/hooks/useQueries.ts (shows existence of useIsCallerAdmin but not its use in the manager/panel in the truncated view)"
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "requirement": "Preserve the existing gradient overlay styling in the section while applying the chosen image fit mode (contain vs cover).",
+      "reason": "A fit-mode hook (localStorage-based) is added, but the diff summary does not include the actual “Share Your Photo” section background rendering/overlay CSS/JSX, so it cannot be confirmed that the gradient overlay remains in place and readable over the image.",
+      "evidence": [
+        "frontend/src/hooks/useSharePhotoBackgroundFit.ts",
+        "frontend/src/components/CustomerPhotoUploader.tsx (truncated)",
+        "frontend/src/components/Contact.tsx (not shown; only referenced in frontend-file-summaries.txt)"
+      ]
+    }
+  ],
+  "hallucinated_features": [
+    {
+      "description": "Broad visual/style redesign (global gradients, header branding, hero/footer luxury styling, various UI enhancements) unrelated to the requested “Share Your Photo” background customization.",
+      "reason": "BuildRequest is narrowly scoped to configurable background image + admin controls + fit mode for the “Share Your Photo” section; the diff summary indicates widespread styling/visual changes beyond that scope.",
+      "evidence": [
+        "frontend-file-summaries.txt (entries for frontend/src/index.css, frontend/src/components/Header.tsx, Hero.tsx, Footer.tsx, etc.)"
+      ]
+    },
+    {
+      "description": "Additional image upload options such as aspect ratio selection (square/portrait/landscape) for the Share Photo background management.",
+      "reason": "REQ-5 only requires a choice between keep original size vs auto-downscale; aspect-ratio cropping options are not requested and may alter the flow beyond what’s needed.",
+      "evidence": [
+        "frontend/src/components/SharePhotoBackgroundManager.tsx (aspectRatio state and AspectRatioChoice handling)",
+        "frontend/src/components/CustomerPhotoUploader.tsx (aspectRatio state/handling)"
+      ]
+    }
+  ],
+  "confidence": 0.56,
   "changed_files": [
+    "backend/main.mo",
+    "backend/migration.mo",
     "frontend-file-summaries.txt",
-    "frontend/src/components/FeaturedGallery.tsx",
-    "frontend/src/components/GalleryDisplay.tsx",
-    "frontend/src/components/GalleryManagementPage.tsx",
+    "frontend/src/components/AdminPanel.tsx",
+    "frontend/src/components/CustomerPhotoUploader.tsx",
+    "frontend/src/components/SharePhotoBackgroundManager.tsx",
+    "frontend/src/hooks/useQueries.ts",
+    "frontend/src/hooks/useSharePhotoBackgroundFit.ts",
     "project_state.json"
   ]
 }

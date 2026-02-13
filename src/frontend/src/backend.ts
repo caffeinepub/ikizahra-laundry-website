@@ -237,6 +237,7 @@ export enum ImageType {
     service = "service",
     hero = "hero",
     logo = "logo",
+    photoBackground = "photoBackground",
     contactBackground = "contactBackground",
     gallery = "gallery"
 }
@@ -299,6 +300,7 @@ export interface backendInterface {
     getImagesByType(imageType: ImageType): Promise<Array<ProcessedImage>>;
     getInStoreSubcategoriesCount(): Promise<[bigint, bigint]>;
     getOrderedGalleryImages(): Promise<Array<ProcessedImage>>;
+    getPhotoBackgroundImage(): Promise<ExternalBlob | null>;
     getService(id: bigint): Promise<Service | null>;
     getServicesByCategory(category: ServiceCategory): Promise<Array<Service>>;
     getServicesByStoreSubcategory(subcategory: StoreServiceCategory): Promise<Array<StoreSubcategoryService>>;
@@ -311,6 +313,7 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     isDemoModeActive(): Promise<boolean>;
     isDemoStateSet(): Promise<boolean>;
+    removePhotoBackgroundImage(): Promise<void>;
     replaceGalleryImage(imageId: bigint, newImage: ExternalBlob | null, desc: string | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setBackgroundTheme(bgTheme: BackgroundTheme): Promise<void>;
@@ -332,6 +335,7 @@ export interface backendInterface {
     uploadCustomerPhoto(photo: ExternalBlob): Promise<bigint>;
     uploadHeroImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadLogoImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
+    uploadPhotoBackgroundImage(blob: ExternalBlob): Promise<void>;
     uploadProcessedContactBackgroundImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadProcessedGalleryImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadProcessedServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
@@ -822,6 +826,20 @@ export class Backend implements backendInterface {
             return from_candid_vec_n34(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getPhotoBackgroundImage(): Promise<ExternalBlob | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getPhotoBackgroundImage();
+                return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getPhotoBackgroundImage();
+            return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getService(arg0: bigint): Promise<Service | null> {
         if (this.processError) {
             try {
@@ -987,6 +1005,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.isDemoStateSet();
+            return result;
+        }
+    }
+    async removePhotoBackgroundImage(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.removePhotoBackgroundImage();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.removePhotoBackgroundImage();
             return result;
         }
     }
@@ -1239,6 +1271,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.uploadLogoImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+            return result;
+        }
+    }
+    async uploadPhotoBackgroundImage(arg0: ExternalBlob): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.uploadPhotoBackgroundImage(await to_candid_ExternalBlob_n65(this._uploadFile, this._downloadFile, arg0));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.uploadPhotoBackgroundImage(await to_candid_ExternalBlob_n65(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -1610,11 +1656,13 @@ function from_candid_variant_n24(_uploadFile: (file: ExternalBlob) => Promise<Ui
 } | {
     logo: null;
 } | {
+    photoBackground: null;
+} | {
     contactBackground: null;
 } | {
     gallery: null;
 }): ImageType {
-    return "service" in value ? ImageType.service : "hero" in value ? ImageType.hero : "logo" in value ? ImageType.logo : "contactBackground" in value ? ImageType.contactBackground : "gallery" in value ? ImageType.gallery : value;
+    return "service" in value ? ImageType.service : "hero" in value ? ImageType.hero : "logo" in value ? ImageType.logo : "photoBackground" in value ? ImageType.photoBackground : "contactBackground" in value ? ImageType.contactBackground : "gallery" in value ? ImageType.gallery : value;
 }
 function from_candid_variant_n28(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     square: null;
@@ -1816,6 +1864,8 @@ function to_candid_variant_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint
 } | {
     logo: null;
 } | {
+    photoBackground: null;
+} | {
     contactBackground: null;
 } | {
     gallery: null;
@@ -1826,6 +1876,8 @@ function to_candid_variant_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint
         hero: null
     } : value == ImageType.logo ? {
         logo: null
+    } : value == ImageType.photoBackground ? {
+        photoBackground: null
     } : value == ImageType.contactBackground ? {
         contactBackground: null
     } : value == ImageType.gallery ? {

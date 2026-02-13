@@ -6,9 +6,11 @@ import Time "mo:core/Time";
 import Storage "blob-storage/Storage";
 import Iter "mo:core/Iter";
 import MixinStorage "blob-storage/Mixin";
+import Migration "migration";
 import AccessControl "authorization/access-control";
 import Principal "mo:core/Principal";
 
+(with migration = Migration.run)
 actor {
   include MixinStorage();
 
@@ -71,6 +73,7 @@ actor {
     #logo;
     #service;
     #contactBackground;
+    #photoBackground;
   };
 
   public type AspectRatioOption = {
@@ -364,6 +367,27 @@ actor {
   /// No authorization check - accessible to all users including anonymous/guests
   let customerPhotos = Map.empty<Nat, Storage.ExternalBlob>();
   var nextCustomerPhotoId = 1;
+
+  /// Customizable photo background image (admin-only)
+  var photoBackgroundImage : ?Storage.ExternalBlob = null;
+
+  public shared ({ caller }) func uploadPhotoBackgroundImage(blob : Storage.ExternalBlob) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can upload photo background image");
+    };
+    photoBackgroundImage := ?blob;
+  };
+
+  public shared ({ caller }) func removePhotoBackgroundImage() : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can remove photo background image");
+    };
+    photoBackgroundImage := null;
+  };
+
+  public query ({ caller }) func getPhotoBackgroundImage() : async ?Storage.ExternalBlob {
+    photoBackgroundImage;
+  };
 
   public query ({ caller }) func getBackgroundTheme() : async BackgroundTheme {
     backgroundTheme;

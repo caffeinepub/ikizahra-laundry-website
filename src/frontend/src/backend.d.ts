@@ -151,6 +151,7 @@ export enum ImageType {
     service = "service",
     hero = "hero",
     logo = "logo",
+    photoBackground = "photoBackground",
     contactBackground = "contactBackground",
     gallery = "gallery"
 }
@@ -207,6 +208,7 @@ export interface backendInterface {
     getImagesByType(imageType: ImageType): Promise<Array<ProcessedImage>>;
     getInStoreSubcategoriesCount(): Promise<[bigint, bigint]>;
     getOrderedGalleryImages(): Promise<Array<ProcessedImage>>;
+    getPhotoBackgroundImage(): Promise<ExternalBlob | null>;
     getService(id: bigint): Promise<Service | null>;
     getServicesByCategory(category: ServiceCategory): Promise<Array<Service>>;
     getServicesByStoreSubcategory(subcategory: StoreServiceCategory): Promise<Array<StoreSubcategoryService>>;
@@ -219,6 +221,7 @@ export interface backendInterface {
     isCallerAdmin(): Promise<boolean>;
     isDemoModeActive(): Promise<boolean>;
     isDemoStateSet(): Promise<boolean>;
+    removePhotoBackgroundImage(): Promise<void>;
     replaceGalleryImage(imageId: bigint, newImage: ExternalBlob | null, desc: string | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
     setBackgroundTheme(bgTheme: BackgroundTheme): Promise<void>;
@@ -240,6 +243,7 @@ export interface backendInterface {
     uploadCustomerPhoto(photo: ExternalBlob): Promise<bigint>;
     uploadHeroImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadLogoImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
+    uploadPhotoBackgroundImage(blob: ExternalBlob): Promise<void>;
     uploadProcessedContactBackgroundImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadProcessedGalleryImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadProcessedServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;

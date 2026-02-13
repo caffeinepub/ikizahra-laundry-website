@@ -71,6 +71,7 @@ export interface HeaderStyleConfig {
 export type ImageType = { 'service' : null } |
   { 'hero' : null } |
   { 'logo' : null } |
+  { 'photoBackground' : null } |
   { 'contactBackground' : null } |
   { 'gallery' : null };
 export interface LayoutConfig {
@@ -230,6 +231,7 @@ export interface _SERVICE {
   'getImagesByType' : ActorMethod<[ImageType], Array<ProcessedImage>>,
   'getInStoreSubcategoriesCount' : ActorMethod<[], [bigint, bigint]>,
   'getOrderedGalleryImages' : ActorMethod<[], Array<ProcessedImage>>,
+  'getPhotoBackgroundImage' : ActorMethod<[], [] | [ExternalBlob]>,
   'getService' : ActorMethod<[bigint], [] | [Service]>,
   'getServicesByCategory' : ActorMethod<[ServiceCategory], Array<Service>>,
   'getServicesByStoreSubcategory' : ActorMethod<
@@ -248,6 +250,7 @@ export interface _SERVICE {
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isDemoModeActive' : ActorMethod<[], boolean>,
   'isDemoStateSet' : ActorMethod<[], boolean>,
+  'removePhotoBackgroundImage' : ActorMethod<[], undefined>,
   'replaceGalleryImage' : ActorMethod<
     [
       bigint,
@@ -318,6 +321,7 @@ export interface _SERVICE {
     ],
     bigint
   >,
+  'uploadPhotoBackgroundImage' : ActorMethod<[ExternalBlob], undefined>,
   'uploadProcessedContactBackgroundImage' : ActorMethod<
     [
       [] | [ExternalBlob],

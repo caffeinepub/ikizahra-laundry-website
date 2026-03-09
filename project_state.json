@@ -1,0 +1,45 @@
+{
+  "schemaVersion": "1.0.0",
+  "projectStateVersion": 3,
+  "summary": "App needs a customizable photo upload under the \"share with us\" section, allowing users to upload any photo and keep original size or auto-adjust sizing.",
+  "architectural_notes": [],
+  "known_issues": [],
+  "isFixRequest": false,
+  "existing_features": [
+    {
+      "id": "feature-replace-the-hardcoded-background-image-used-in-the-share-your-photo-section-with-a-configurable-image-that-can-be-uploaded-by-the-site-owner-while-keeping-a-fallback-to-the-current-static-asset-when-no-custom-image-is-set",
+      "title": "Replace the hardcoded background image used in the “Share Your Photo” section with a configurable image that can be uploaded by the site owner, while keeping a fallback to the current static asset when no custom image is set.",
+      "reqIds": [
+        "REQ-4"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-an-admin-only-ui-to-upload-replace-remove-the-share-your-photo-section-image-accepting-common-image-formats-jpeg-png-webp-and-allowing-either-preserving-the-original-image-dimensions-or-automatically-resizing-to-a-reasonable-max-resolution-consistent-with-existing-upload-constraints",
+      "title": "Add an admin-only UI to upload/replace/remove the “Share Your Photo” section image, accepting common image formats (JPEG/PNG/WebP) and allowing either preserving the original image dimensions or automatically resizing to a reasonable max resolution consistent with existing upload constraints.",
+      "reqIds": [
+        "REQ-5"
+      ],
+      "version": 1
+    },
+    {
+      "id": "feature-add-a-display-fit-setting-for-the-share-your-photo-section-image-so-that-the-site-owner-can-choose-how-the-uploaded-image-is-rendered-e-g-keep-full-image-visible-vs-fill-the-container-while-preserving-the-existing-overlay-styling",
+      "title": "Add a display-fit setting for the “Share Your Photo” section image so that the site owner can choose how the uploaded image is rendered (e.g., keep full image visible vs fill the container), while preserving the existing overlay styling.",
+      "reqIds": [
+        "REQ-6"
+      ],
+      "version": 1
+    }
+  ],
+  "new_feature_requests": [
+    {
+      "id": "AR-1",
+      "summary": "Replace the default photo upload under \"share with us\" with user-selected uploads; support keeping original dimensions or automatically adjusting size.",
+      "reqIds": [],
+      "status": "pending"
+    }
+  ],
+  "projectName": "Allow a custom user-uploaded photo to replace the default image in the “Share Your Photo” section (preserve original size or auto-fit)",
+  "clarification_mode": "instant",
+  "clarification_rounds": 0
+}

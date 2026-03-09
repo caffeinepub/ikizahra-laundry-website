@@ -1,0 +1,76 @@
+{
+  "kind": "build_request",
+  "title": "Allow a custom user-uploaded photo to replace the default image in the “Share Your Photo” section (preserve original size or auto-fit)",
+  "priority": "normal",
+  "requirements": [
+    {
+      "id": "REQ-4",
+      "text": "Replace the hardcoded background image used in the “Share Your Photo” section with a configurable image that can be uploaded by the site owner, while keeping a fallback to the current static asset when no custom image is set.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "Saya ingin foto uploud di bawah share with us diganti dengan foto sendiri bebas apa yg mau saya uploud"
+        ]
+      },
+      "acceptanceCriteria": [
+        "If no custom image has been uploaded for the “Share Your Photo” section, the UI continues to display /assets/generated/contact-woman-laundry.dim_800x600.jpg as it does today.",
+        "If a custom image has been uploaded, the “Share Your Photo” section displays that uploaded image instead of the hardcoded asset.",
+        "The custom image is stored in the canister and survives page refreshes."
+      ]
+    },
+    {
+      "id": "REQ-5",
+      "text": "Add an admin-only UI to upload/replace/remove the “Share Your Photo” section image, accepting common image formats (JPEG/PNG/WebP) and allowing either preserving the original image dimensions or automatically resizing to a reasonable max resolution consistent with existing upload constraints.",
+      "target": "both",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "...bebas apa yg mau saya uploud dengan ukuran yg disesuaikan atau sesuai asli nya"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Only admins can access the controls to upload/replace/remove the “Share Your Photo” section image.",
+        "The uploader accepts JPEG, PNG, or WebP images up to 10MB (consistent with the existing customer uploader constraints).",
+        "Admin can choose between (a) keep original size (no resize) and (b) auto-adjust size (downscale only; do not upscale).",
+        "After a successful upload, the “Share Your Photo” section updates to show the new image without requiring a full page reload."
+      ]
+    },
+    {
+      "id": "REQ-6",
+      "text": "Add a display-fit setting for the “Share Your Photo” section image so that the site owner can choose how the uploaded image is rendered (e.g., keep full image visible vs fill the container), while preserving the existing overlay styling.",
+      "target": "frontend",
+      "source": {
+        "messageIds": [
+          "recent-messages"
+        ],
+        "quotes": [
+          "...ukuran yg disesuaikan atau sesuai asli nya"
+        ]
+      },
+      "acceptanceCriteria": [
+        "Admin can select a fit mode that maps to a clear rendering behavior (e.g., contain vs cover).",
+        "The chosen fit mode is applied when rendering the “Share Your Photo” section image.",
+        "The existing gradient overlay in the section remains in place and readable over the image."
+      ]
+    }
+  ],
+  "constraints": [
+    "Do not edit any files under frontend/src/components/ui (compose existing UI components instead).",
+    "Do not modify frontend/src/hooks/useInternetIdentity.ts(x), frontend/src/hooks/useActor.ts, or frontend/src/main.tsx (these paths are immutable).",
+    "Backend must remain a single Motoko actor in backend/main.mo; only add backend/migration.mo if a stable-state upgrade is required."
+  ],
+  "nonGoals": [
+    "Do not add third-party authentication providers (only Internet Identity is allowed).",
+    "Do not add external databases or external file storage; store the uploaded image using the existing canister storage mechanisms.",
+    "Do not change the existing customer photo upload flow beyond what is needed to support replacing the section’s default image."
+  ],
+  "imageRequirements": {
+    "required": [],
+    "edits": []
+  }
+}

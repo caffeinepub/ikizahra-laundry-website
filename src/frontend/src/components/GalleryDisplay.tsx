@@ -1,16 +1,27 @@
-import { useState, useEffect } from 'react';
-import { useGetOrderedGalleryImages, useUpdateImageDescription, useIsCallerAdmin } from '../hooks/useQueries';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { Edit2, Image as ImageIcon, Plus } from 'lucide-react';
-import { toast } from 'sonner';
-import { ImageType } from '../backend';
-import { GalleryManagementPage } from './GalleryManagementPage';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import { Edit2, Image as ImageIcon, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { ImageType } from "../backend";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import {
+  useGetOrderedGalleryImages,
+  useIsCallerAdmin,
+  useUpdateImageDescription,
+} from "../hooks/useQueries";
+import { GalleryManagementPage } from "./GalleryManagementPage";
 
 export function GalleryDisplay() {
   const { identity } = useInternetIdentity();
@@ -18,8 +29,11 @@ export function GalleryDisplay() {
   const { data: isAdmin } = useIsCallerAdmin();
   const updateDescription = useUpdateImageDescription();
 
-  const [editingImage, setEditingImage] = useState<{ id: bigint; description: string } | null>(null);
-  const [newDescription, setNewDescription] = useState('');
+  const [editingImage, setEditingImage] = useState<{
+    id: bigint;
+    description: string;
+  } | null>(null);
+  const [newDescription, setNewDescription] = useState("");
   const [showGalleryPage, setShowGalleryPage] = useState(false);
 
   // Listen for gallery page navigation
@@ -28,9 +42,15 @@ export function GalleryDisplay() {
       setShowGalleryPage(e.detail.showGalleryPage);
     };
 
-    window.addEventListener('galleryPageChange', handleGalleryPageChange as EventListener);
+    window.addEventListener(
+      "galleryPageChange",
+      handleGalleryPageChange as EventListener,
+    );
     return () => {
-      window.removeEventListener('galleryPageChange', handleGalleryPageChange as EventListener);
+      window.removeEventListener(
+        "galleryPageChange",
+        handleGalleryPageChange as EventListener,
+      );
     };
   }, []);
 
@@ -47,22 +67,23 @@ export function GalleryDisplay() {
         id: editingImage.id,
         description: newDescription,
       });
-      toast.success('Deskripsi berhasil diperbarui');
+      toast.success("Deskripsi berhasil diperbarui");
       setEditingImage(null);
-      setNewDescription('');
+      setNewDescription("");
     } catch (error: any) {
-      console.error('Update error:', error);
-      toast.error(error.message || 'Gagal memperbarui deskripsi');
+      console.error("Update error:", error);
+      toast.error(error.message || "Gagal memperbarui deskripsi");
     }
   };
 
   const handleAddImageClick = () => {
     setShowGalleryPage(true);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Filter only gallery images (not hero, logo, or service images)
-  const galleryImages = images?.filter(img => img.imageType === ImageType.gallery) || [];
+  const galleryImages =
+    images?.filter((img) => img.imageType === ImageType.gallery) || [];
 
   // Show gallery management page if requested
   if (showGalleryPage) {
@@ -89,18 +110,22 @@ export function GalleryDisplay() {
 
   return (
     <>
-      <section id="gallery" className="py-20 gradient-luxury-mint-beige relative overflow-hidden">
+      <section
+        id="gallery"
+        className="py-20 gradient-luxury-mint-beige relative overflow-hidden"
+      >
         {/* Decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-mint-300/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-beige-300/20 to-transparent rounded-full blur-3xl"></div>
-        
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-mint-300/20 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-beige-300/20 to-transparent rounded-full blur-3xl" />
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-14">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-emerald-800 via-teal-700 to-cyan-700 bg-clip-text text-transparent">
               Galeri Kami
             </h2>
             <p className="text-lg md:text-xl text-emerald-800/80 max-w-2xl mx-auto leading-relaxed">
-              Lihat hasil kerja dan fasilitas laundry kami yang berkualitas tinggi
+              Lihat hasil kerja dan fasilitas laundry kami yang berkualitas
+              tinggi
             </p>
           </div>
 
@@ -114,8 +139,8 @@ export function GalleryDisplay() {
                   Belum ada gambar di galeri
                 </p>
                 {isAdmin && identity && (
-                  <Button 
-                    onClick={handleAddImageClick} 
+                  <Button
+                    onClick={handleAddImageClick}
                     className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
                     size="lg"
                   >
@@ -129,7 +154,10 @@ export function GalleryDisplay() {
             <>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
                 {galleryImages.map((image) => (
-                  <Card key={Number(image.id)} className="luxury-card border-emerald-200/50 overflow-hidden group hover:scale-105 transition-all duration-300">
+                  <Card
+                    key={Number(image.id)}
+                    className="luxury-card border-emerald-200/50 overflow-hidden group hover:scale-105 transition-all duration-300"
+                  >
                     <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50 to-teal-50 aspect-[4/3]">
                       {image.image && (
                         <img
@@ -139,7 +167,7 @@ export function GalleryDisplay() {
                           loading="lazy"
                         />
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                     </div>
                     <CardContent className="p-5">
                       <div className="flex items-start justify-between gap-3">
@@ -153,7 +181,9 @@ export function GalleryDisplay() {
                             variant="ghost"
                             size="icon"
                             className="h-9 w-9 flex-shrink-0 hover:bg-emerald-100"
-                            onClick={() => handleEditClick(image.id, image.description)}
+                            onClick={() =>
+                              handleEditClick(image.id, image.description)
+                            }
                           >
                             <Edit2 className="h-4 w-4 text-emerald-700" />
                           </Button>
@@ -166,9 +196,9 @@ export function GalleryDisplay() {
 
               {isAdmin && identity && (
                 <div className="flex justify-center mt-12">
-                  <Button 
-                    onClick={handleAddImageClick} 
-                    size="lg" 
+                  <Button
+                    onClick={handleAddImageClick}
+                    size="lg"
                     className="gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 px-8 py-6 text-lg"
                   >
                     <Plus className="h-5 w-5" />
@@ -181,17 +211,27 @@ export function GalleryDisplay() {
         </div>
       </section>
 
-      <Dialog open={!!editingImage} onOpenChange={(open) => !open && setEditingImage(null)}>
+      <Dialog
+        open={!!editingImage}
+        onOpenChange={(open) => !open && setEditingImage(null)}
+      >
         <DialogContent className="luxury-card">
           <DialogHeader>
-            <DialogTitle className="text-emerald-900">Edit Deskripsi Gambar</DialogTitle>
+            <DialogTitle className="text-emerald-900">
+              Edit Deskripsi Gambar
+            </DialogTitle>
             <DialogDescription>
               Perbarui deskripsi untuk gambar ini
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-emerald-900 font-medium">Deskripsi</Label>
+              <Label
+                htmlFor="description"
+                className="text-emerald-900 font-medium"
+              >
+                Deskripsi
+              </Label>
               <Textarea
                 id="description"
                 value={newDescription}
@@ -206,12 +246,12 @@ export function GalleryDisplay() {
             <Button variant="outline" onClick={() => setEditingImage(null)}>
               Batal
             </Button>
-            <Button 
-              onClick={handleSaveDescription} 
+            <Button
+              onClick={handleSaveDescription}
               disabled={updateDescription.isPending}
               className="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
             >
-              {updateDescription.isPending ? 'Menyimpan...' : 'Simpan'}
+              {updateDescription.isPending ? "Menyimpan..." : "Simpan"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,17 +1,28 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Upload, Info, X } from 'lucide-react';
-import { toast } from 'sonner';
-import { useUploadHeroImage } from '../hooks/useQueries';
-import { ExternalBlob, AspectRatioOption } from '../backend';
-import type { ProcessedImage } from '../backend';
-import { processImageWithAspectRatio, validateImageFile, formatFileSize } from '../lib/imageProcessor';
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
+import { Info, Upload, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { AspectRatioOption, ExternalBlob } from "../backend";
+import type { ProcessedImage } from "../backend";
+import { useUploadHeroImage } from "../hooks/useQueries";
+import {
+  formatFileSize,
+  processImageWithAspectRatio,
+  validateImageFile,
+} from "../lib/imageProcessor";
 
-type AspectRatioChoice = '1:1' | '4:3' | '9:16';
+type AspectRatioChoice = "1:1" | "4:3" | "9:16";
 
 interface HeroBannerEditorProps {
   open: boolean;
@@ -19,13 +30,18 @@ interface HeroBannerEditorProps {
   currentImage: ProcessedImage | null;
 }
 
-export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEditorProps) {
+export function HeroBannerEditor({
+  open,
+  onClose,
+  currentImage,
+}: HeroBannerEditorProps) {
   const uploadHeroImage = useUploadHeroImage();
-  
+
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [description, setDescription] = useState('');
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioChoice>('4:3');
+  const [description, setDescription] = useState("");
+  const [selectedAspectRatio, setSelectedAspectRatio] =
+    useState<AspectRatioChoice>("4:3");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -36,40 +52,44 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
     }
   }, [currentImage]);
 
-  const mapAspectRatioToEnum = (ratio: AspectRatioChoice): AspectRatioOption => {
+  const mapAspectRatioToEnum = (
+    ratio: AspectRatioChoice,
+  ): AspectRatioOption => {
     switch (ratio) {
-      case '1:1':
+      case "1:1":
         return AspectRatioOption.square;
-      case '4:3':
+      case "4:3":
         return AspectRatioOption.landscape;
-      case '9:16':
+      case "9:16":
         return AspectRatioOption.portrait;
       default:
         return AspectRatioOption.landscape;
     }
   };
 
-  const mapEnumToAspectRatio = (aspectRatio: AspectRatioOption): AspectRatioChoice => {
+  const mapEnumToAspectRatio = (
+    aspectRatio: AspectRatioOption,
+  ): AspectRatioChoice => {
     switch (aspectRatio) {
       case AspectRatioOption.square:
-        return '1:1';
+        return "1:1";
       case AspectRatioOption.landscape:
-        return '4:3';
+        return "4:3";
       case AspectRatioOption.portrait:
-        return '9:16';
+        return "9:16";
       default:
-        return '4:3';
+        return "4:3";
     }
   };
 
   const getAspectRatioLabel = (ratio: AspectRatioChoice): string => {
     switch (ratio) {
-      case '1:1':
-        return 'Persegi 1:1';
-      case '4:3':
-        return 'Landscape 4:3';
-      case '9:16':
-        return 'Vertikal 9:16';
+      case "1:1":
+        return "Persegi 1:1";
+      case "4:3":
+        return "Landscape 4:3";
+      case "9:16":
+        return "Vertikal 9:16";
       default:
         return ratio;
     }
@@ -77,14 +97,14 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
 
   const getAspectRatioClass = (ratio: AspectRatioChoice): string => {
     switch (ratio) {
-      case '1:1':
-        return 'aspect-square';
-      case '4:3':
-        return 'aspect-[4/3]';
-      case '9:16':
-        return 'aspect-[9/16]';
+      case "1:1":
+        return "aspect-square";
+      case "4:3":
+        return "aspect-[4/3]";
+      case "9:16":
+        return "aspect-[9/16]";
       default:
-        return 'aspect-[4/3]';
+        return "aspect-[4/3]";
     }
   };
 
@@ -105,22 +125,25 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error('Mohon pilih gambar terlebih dahulu');
+      toast.error("Mohon pilih gambar terlebih dahulu");
       return;
     }
 
     try {
       setIsProcessing(true);
-      toast.info('Memproses gambar...', { duration: 2000 });
+      toast.info("Memproses gambar...", { duration: 2000 });
 
       const processedImage = await processImageWithAspectRatio(
         selectedFile,
         selectedAspectRatio,
         1440,
-        0.90
+        0.9,
       );
-      
-      toast.success(`Gambar diproses: ${formatFileSize(processedImage.fileSizeBytes)}`, { duration: 2000 });
+
+      toast.success(
+        `Gambar diproses: ${formatFileSize(processedImage.fileSizeBytes)}`,
+        { duration: 2000 },
+      );
 
       setUploadProgress(0);
       let externalBlob = ExternalBlob.fromBytes(processedImage.blob);
@@ -130,18 +153,20 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
 
       await uploadHeroImage.mutateAsync({
         image: externalBlob,
-        description: description || 'Banner Hero Iki Zahra Laundry',
+        description: description || "Banner Hero Iki Zahra Laundry",
         aspectRatio: mapAspectRatioToEnum(selectedAspectRatio),
         fileSizeBytes: BigInt(processedImage.fileSizeBytes),
         width: BigInt(processedImage.width),
         height: BigInt(processedImage.height),
       });
 
-      toast.success('Banner hero berhasil diperbarui!');
+      toast.success("Banner hero berhasil diperbarui!");
       resetAndClose();
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Gagal mengunggah banner. Silakan coba lagi.');
+      console.error("Upload error:", error);
+      toast.error(
+        error.message || "Gagal mengunggah banner. Silakan coba lagi.",
+      );
       setUploadProgress(0);
     } finally {
       setIsProcessing(false);
@@ -176,7 +201,7 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
             Perbarui gambar banner hero untuk halaman utama
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-6 py-4">
           {/* Current Image Preview */}
           {currentImage?.image && !selectedFile && (
@@ -200,11 +225,17 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
             <Label className="text-sm font-medium">Pilih Rasio Aspek</Label>
             <RadioGroup
               value={selectedAspectRatio}
-              onValueChange={(value) => setSelectedAspectRatio(value as AspectRatioChoice)}
+              onValueChange={(value) =>
+                setSelectedAspectRatio(value as AspectRatioChoice)
+              }
               className="grid grid-cols-3 gap-3"
             >
               <div>
-                <RadioGroupItem value="1:1" id="hero-ratio-1-1" className="peer sr-only" />
+                <RadioGroupItem
+                  value="1:1"
+                  id="hero-ratio-1-1"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="hero-ratio-1-1"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
@@ -215,25 +246,37 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
                 </Label>
               </div>
               <div>
-                <RadioGroupItem value="4:3" id="hero-ratio-4-3" className="peer sr-only" />
+                <RadioGroupItem
+                  value="4:3"
+                  id="hero-ratio-4-3"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="hero-ratio-4-3"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                 >
                   <div className="w-12 h-9 border-2 border-current rounded mb-2" />
                   <span className="text-xs font-medium">4:3</span>
-                  <span className="text-xs text-muted-foreground">Landscape</span>
+                  <span className="text-xs text-muted-foreground">
+                    Landscape
+                  </span>
                 </Label>
               </div>
               <div>
-                <RadioGroupItem value="9:16" id="hero-ratio-9-16" className="peer sr-only" />
+                <RadioGroupItem
+                  value="9:16"
+                  id="hero-ratio-9-16"
+                  className="peer sr-only"
+                />
                 <Label
                   htmlFor="hero-ratio-9-16"
                   className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                 >
                   <div className="w-7 h-12 border-2 border-current rounded mb-2" />
                   <span className="text-xs font-medium">9:16</span>
-                  <span className="text-xs text-muted-foreground">Vertikal</span>
+                  <span className="text-xs text-muted-foreground">
+                    Vertikal
+                  </span>
                 </Label>
               </div>
             </RadioGroup>
@@ -245,7 +288,9 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
             <div className="text-sm text-sky-900 dark:text-sky-100">
               <p className="font-medium mb-1">Gambar akan diproses otomatis:</p>
               <ul className="list-disc list-inside space-y-0.5 text-xs">
-                <li>Diubah ke rasio {getAspectRatioLabel(selectedAspectRatio)}</li>
+                <li>
+                  Diubah ke rasio {getAspectRatioLabel(selectedAspectRatio)}
+                </li>
                 <li>Dipotong dan disesuaikan untuk tampilan optimal</li>
                 <li>Dikompresi untuk ukuran optimal</li>
                 <li>Kualitas tetap terjaga untuk banner</li>
@@ -257,7 +302,7 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
           {!selectedFile ? (
             <div className="space-y-2">
               <Label className="text-sm font-medium">
-                {currentImage?.image ? 'Pilih Banner Baru' : 'Pilih Banner'}
+                {currentImage?.image ? "Pilih Banner Baru" : "Pilih Banner"}
               </Label>
               <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
                 <div className="flex flex-col items-center gap-4">
@@ -289,7 +334,9 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Label className="text-sm font-medium">Pratinjau Banner Baru</Label>
+                <Label className="text-sm font-medium">
+                  Pratinjau Banner Baru
+                </Label>
                 <Button
                   variant="ghost"
                   size="sm"
@@ -339,11 +386,13 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
               <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary transition-all duration-300"
-                  style={{ width: isProcessing ? '50%' : `${uploadProgress}%` }}
+                  style={{ width: isProcessing ? "50%" : `${uploadProgress}%` }}
                 />
               </div>
               <p className="text-sm text-center text-muted-foreground">
-                {isProcessing ? 'Memproses gambar...' : `Mengunggah... ${uploadProgress}%`}
+                {isProcessing
+                  ? "Memproses gambar..."
+                  : `Mengunggah... ${uploadProgress}%`}
               </p>
             </div>
           )}
@@ -359,9 +408,15 @@ export function HeroBannerEditor({ open, onClose, currentImage }: HeroBannerEdit
           </Button>
           <Button
             onClick={handleUpload}
-            disabled={!selectedFile || uploadHeroImage.isPending || isProcessing}
+            disabled={
+              !selectedFile || uploadHeroImage.isPending || isProcessing
+            }
           >
-            {isProcessing ? 'Memproses...' : uploadHeroImage.isPending ? 'Mengunggah...' : 'Simpan Banner'}
+            {isProcessing
+              ? "Memproses..."
+              : uploadHeroImage.isPending
+                ? "Mengunggah..."
+                : "Simpan Banner"}
           </Button>
         </DialogFooter>
       </DialogContent>

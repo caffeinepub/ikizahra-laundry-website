@@ -1,15 +1,29 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useActor } from './useActor';
-import type { UserProfile, Service, ServiceCategory, ProcessedImage, ContactInfo, ContactFormEntry, StoreSubcategoryService, StoreServiceCategory, BackgroundTheme } from '../backend';
-import { ExternalBlob, AspectRatioOption, ImageType } from '../backend';
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type {
+  BackgroundTheme,
+  ContactFormEntry,
+  ContactInfo,
+  ProcessedImage,
+  Service,
+  ServiceCategory,
+  StoreServiceCategory,
+  StoreSubcategoryService,
+  UserProfile,
+} from "../backend";
+import {
+  type AspectRatioOption,
+  type ExternalBlob,
+  ImageType,
+} from "../backend";
+import { useActor } from "./useActor";
 
 export function useGetCallerUserProfile() {
   const { actor, isFetching: actorFetching } = useActor();
 
   const query = useQuery<UserProfile | null>({
-    queryKey: ['currentUserProfile'],
+    queryKey: ["currentUserProfile"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getCallerUserProfile();
     },
     enabled: !!actor && !actorFetching,
@@ -29,11 +43,11 @@ export function useSaveCallerUserProfile() {
 
   return useMutation({
     mutationFn: async (profile: UserProfile) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.saveCallerUserProfile(profile);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['currentUserProfile'] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserProfile"] });
     },
   });
 }
@@ -42,7 +56,7 @@ export function useIsCallerAdmin() {
   const { actor, isFetching } = useActor();
 
   return useQuery<boolean>({
-    queryKey: ['isAdmin'],
+    queryKey: ["isAdmin"],
     queryFn: async () => {
       if (!actor) return false;
       return actor.isCallerAdmin();
@@ -55,7 +69,7 @@ export function useGetOrderedGalleryImages() {
   const { actor, isFetching } = useActor();
 
   return useQuery<ProcessedImage[]>({
-    queryKey: ['orderedGalleryImages'],
+    queryKey: ["orderedGalleryImages"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getOrderedGalleryImages();
@@ -68,7 +82,7 @@ export function useGetImagesByType(imageType: ImageType) {
   const { actor, isFetching } = useActor();
 
   return useQuery<ProcessedImage[]>({
-    queryKey: ['imagesByType', imageType],
+    queryKey: ["imagesByType", imageType],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getImagesByType(imageType);
@@ -83,12 +97,12 @@ export function useUpdateImageDescription() {
 
   return useMutation({
     mutationFn: async (data: { id: bigint; description: string }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.updateImageDescription(data.id, data.description);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orderedGalleryImages'] });
-      queryClient.invalidateQueries({ queryKey: ['imagesByType'] });
+      queryClient.invalidateQueries({ queryKey: ["orderedGalleryImages"] });
+      queryClient.invalidateQueries({ queryKey: ["imagesByType"] });
     },
   });
 }
@@ -98,28 +112,28 @@ export function useUploadGalleryImage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { 
-      image: ExternalBlob; 
+    mutationFn: async (data: {
+      image: ExternalBlob;
       description: string;
       aspectRatio: AspectRatioOption;
       fileSizeBytes: bigint;
       width: bigint;
       height: bigint;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.uploadProcessedGalleryImage(
-        data.image, 
+        data.image,
         data.description,
         data.aspectRatio,
         data.fileSizeBytes,
         null,
         data.width,
-        data.height
+        data.height,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orderedGalleryImages'] });
-      queryClient.invalidateQueries({ queryKey: ['imagesByType'] });
+      queryClient.invalidateQueries({ queryKey: ["orderedGalleryImages"] });
+      queryClient.invalidateQueries({ queryKey: ["imagesByType"] });
     },
   });
 }
@@ -130,12 +144,14 @@ export function useDeleteGalleryImage() {
 
   return useMutation({
     mutationFn: async (imageId: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.deleteGalleryImage(imageId);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orderedGalleryImages'] });
-      queryClient.invalidateQueries({ queryKey: ['imagesByType', ImageType.gallery] });
+      queryClient.invalidateQueries({ queryKey: ["orderedGalleryImages"] });
+      queryClient.invalidateQueries({
+        queryKey: ["imagesByType", ImageType.gallery],
+      });
     },
   });
 }
@@ -154,7 +170,7 @@ export function useReplaceGalleryImage() {
       width: bigint;
       height: bigint;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.replaceGalleryImage(
         data.imageId,
         data.newImage,
@@ -163,12 +179,14 @@ export function useReplaceGalleryImage() {
         data.fileSizeBytes,
         null,
         data.width,
-        data.height
+        data.height,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['orderedGalleryImages'] });
-      queryClient.invalidateQueries({ queryKey: ['imagesByType', ImageType.gallery] });
+      queryClient.invalidateQueries({ queryKey: ["orderedGalleryImages"] });
+      queryClient.invalidateQueries({
+        queryKey: ["imagesByType", ImageType.gallery],
+      });
     },
   });
 }
@@ -178,27 +196,29 @@ export function useUploadHeroImage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { 
-      image: ExternalBlob; 
+    mutationFn: async (data: {
+      image: ExternalBlob;
       description: string;
       aspectRatio: AspectRatioOption;
       fileSizeBytes: bigint;
       width: bigint;
       height: bigint;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.uploadHeroImage(
-        data.image, 
+        data.image,
         data.description,
         data.aspectRatio,
         data.fileSizeBytes,
         null,
         data.width,
-        data.height
+        data.height,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['imagesByType', ImageType.hero] });
+      queryClient.invalidateQueries({
+        queryKey: ["imagesByType", ImageType.hero],
+      });
     },
   });
 }
@@ -207,7 +227,7 @@ export function useGetAllServices() {
   const { actor, isFetching } = useActor();
 
   return useQuery<Service[]>({
-    queryKey: ['services'],
+    queryKey: ["services"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllServices();
@@ -220,7 +240,7 @@ export function useGetAllStoreSubcategoryServices() {
   const { actor, isFetching } = useActor();
 
   return useQuery<StoreSubcategoryService[]>({
-    queryKey: ['storeSubcategoryServices'],
+    queryKey: ["storeSubcategoryServices"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllStoreSubcategoryServices();
@@ -233,7 +253,7 @@ export function useGetServicesByCategory(category: ServiceCategory) {
   const { actor, isFetching } = useActor();
 
   return useQuery<Service[]>({
-    queryKey: ['services', category],
+    queryKey: ["services", category],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getServicesByCategory(category);
@@ -242,11 +262,13 @@ export function useGetServicesByCategory(category: ServiceCategory) {
   });
 }
 
-export function useGetServicesByStoreSubcategory(subcategory: StoreServiceCategory) {
+export function useGetServicesByStoreSubcategory(
+  subcategory: StoreServiceCategory,
+) {
   const { actor, isFetching } = useActor();
 
   return useQuery<StoreSubcategoryService[]>({
-    queryKey: ['storeSubcategoryServices', subcategory],
+    queryKey: ["storeSubcategoryServices", subcategory],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getServicesByStoreSubcategory(subcategory);
@@ -260,12 +282,22 @@ export function useCreateService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; description: string; price: bigint; category: ServiceCategory }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.createService(data.name, data.description, data.price, data.category);
+    mutationFn: async (data: {
+      name: string;
+      description: string;
+      price: bigint;
+      category: ServiceCategory;
+    }) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.createService(
+        data.name,
+        data.description,
+        data.price,
+        data.category,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ["services"] });
     },
   });
 }
@@ -275,12 +307,22 @@ export function useCreateStoreSubcategoryService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { name: string; description: string; price: bigint; subcategory: StoreServiceCategory }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.createStoreSubcategoryService(data.name, data.description, data.price, data.subcategory);
+    mutationFn: async (data: {
+      name: string;
+      description: string;
+      price: bigint;
+      subcategory: StoreServiceCategory;
+    }) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.createStoreSubcategoryService(
+        data.name,
+        data.description,
+        data.price,
+        data.subcategory,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storeSubcategoryServices'] });
+      queryClient.invalidateQueries({ queryKey: ["storeSubcategoryServices"] });
     },
   });
 }
@@ -290,12 +332,22 @@ export function useUpdateService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: bigint; name: string; description: string; price: bigint }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.updateService(data.id, data.name, data.description, data.price);
+    mutationFn: async (data: {
+      id: bigint;
+      name: string;
+      description: string;
+      price: bigint;
+    }) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.updateService(
+        data.id,
+        data.name,
+        data.description,
+        data.price,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ["services"] });
     },
   });
 }
@@ -305,12 +357,22 @@ export function useUpdateStoreSubcategoryService() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (data: { id: bigint; name: string; description: string; price: bigint }) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.updateStoreSubcategoryService(data.id, data.name, data.description, data.price);
+    mutationFn: async (data: {
+      id: bigint;
+      name: string;
+      description: string;
+      price: bigint;
+    }) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.updateStoreSubcategoryService(
+        data.id,
+        data.name,
+        data.description,
+        data.price,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storeSubcategoryServices'] });
+      queryClient.invalidateQueries({ queryKey: ["storeSubcategoryServices"] });
     },
   });
 }
@@ -321,11 +383,11 @@ export function useDeleteService() {
 
   return useMutation({
     mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.deleteService(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ["services"] });
     },
   });
 }
@@ -336,11 +398,11 @@ export function useDeleteStoreSubcategoryService() {
 
   return useMutation({
     mutationFn: async (id: bigint) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.deleteStoreSubcategoryService(id);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storeSubcategoryServices'] });
+      queryClient.invalidateQueries({ queryKey: ["storeSubcategoryServices"] });
     },
   });
 }
@@ -358,7 +420,7 @@ export function useUploadServiceImage() {
       width: bigint;
       height: bigint;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.uploadProcessedServiceImage(
         data.id,
         data.image,
@@ -366,11 +428,11 @@ export function useUploadServiceImage() {
         data.fileSizeBytes,
         null,
         data.width,
-        data.height
+        data.height,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['services'] });
+      queryClient.invalidateQueries({ queryKey: ["services"] });
     },
   });
 }
@@ -388,7 +450,7 @@ export function useUploadStoreSubcategoryServiceImage() {
       width: bigint;
       height: bigint;
     }) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.uploadProcessedStoreSubcategoryServiceImage(
         data.id,
         data.image,
@@ -396,11 +458,11 @@ export function useUploadStoreSubcategoryServiceImage() {
         data.fileSizeBytes,
         null,
         data.width,
-        data.height
+        data.height,
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['storeSubcategoryServices'] });
+      queryClient.invalidateQueries({ queryKey: ["storeSubcategoryServices"] });
     },
   });
 }
@@ -409,9 +471,9 @@ export function useGetContactInfo() {
   const { actor, isFetching } = useActor();
 
   return useQuery<ContactInfo>({
-    queryKey: ['contactInfo'],
+    queryKey: ["contactInfo"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getContactInfo();
     },
     enabled: !!actor && !isFetching,
@@ -424,11 +486,16 @@ export function useUpdateContactInfo() {
 
   return useMutation({
     mutationFn: async (data: ContactInfo) => {
-      if (!actor) throw new Error('Actor not initialized');
-      return actor.updateContactInfo(data.phone, data.whatsapp, data.address, data.hours);
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.updateContactInfo(
+        data.phone,
+        data.whatsapp,
+        data.address,
+        data.hours,
+      );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['contactInfo'] });
+      queryClient.invalidateQueries({ queryKey: ["contactInfo"] });
     },
   });
 }
@@ -437,8 +504,12 @@ export function useSubmitContactForm() {
   const { actor } = useActor();
 
   return useMutation({
-    mutationFn: async (data: { name: string; phone: string; message: string }) => {
-      if (!actor) throw new Error('Actor not initialized');
+    mutationFn: async (data: {
+      name: string;
+      phone: string;
+      message: string;
+    }) => {
+      if (!actor) throw new Error("Actor not initialized");
       return actor.submitContactForm(data.name, data.phone, data.message);
     },
   });
@@ -448,7 +519,7 @@ export function useGetAllContactFormEntries() {
   const { actor, isFetching } = useActor();
 
   return useQuery<ContactFormEntry[]>({
-    queryKey: ['contactFormEntries'],
+    queryKey: ["contactFormEntries"],
     queryFn: async () => {
       if (!actor) return [];
       return actor.getAllContactFormEntries();
@@ -461,9 +532,9 @@ export function useGetBackgroundTheme() {
   const { actor, isFetching } = useActor();
 
   return useQuery<BackgroundTheme>({
-    queryKey: ['backgroundTheme'],
+    queryKey: ["backgroundTheme"],
     queryFn: async () => {
-      if (!actor) throw new Error('Actor not available');
+      if (!actor) throw new Error("Actor not available");
       return actor.getBackgroundTheme();
     },
     enabled: !!actor && !isFetching,
@@ -476,11 +547,11 @@ export function useSetBackgroundTheme() {
 
   return useMutation({
     mutationFn: async (theme: BackgroundTheme) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.setBackgroundTheme(theme);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['backgroundTheme'] });
+      queryClient.invalidateQueries({ queryKey: ["backgroundTheme"] });
     },
   });
 }
@@ -490,7 +561,7 @@ export function useUploadCustomerPhoto() {
 
   return useMutation({
     mutationFn: async (photo: ExternalBlob) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.uploadCustomerPhoto(photo);
     },
   });
@@ -500,7 +571,7 @@ export function useGetPhotoBackgroundImage() {
   const { actor, isFetching } = useActor();
 
   return useQuery<ExternalBlob | null>({
-    queryKey: ['photoBackgroundImage'],
+    queryKey: ["photoBackgroundImage"],
     queryFn: async () => {
       if (!actor) return null;
       return actor.getPhotoBackgroundImage();
@@ -515,11 +586,11 @@ export function useUploadPhotoBackgroundImage() {
 
   return useMutation({
     mutationFn: async (blob: ExternalBlob) => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.uploadPhotoBackgroundImage(blob);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['photoBackgroundImage'] });
+      queryClient.invalidateQueries({ queryKey: ["photoBackgroundImage"] });
     },
   });
 }
@@ -530,11 +601,11 @@ export function useRemovePhotoBackgroundImage() {
 
   return useMutation({
     mutationFn: async () => {
-      if (!actor) throw new Error('Actor not initialized');
+      if (!actor) throw new Error("Actor not initialized");
       return actor.removePhotoBackgroundImage();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['photoBackgroundImage'] });
+      queryClient.invalidateQueries({ queryKey: ["photoBackgroundImage"] });
     },
   });
 }

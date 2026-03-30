@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
-import { LoginButton } from './LoginButton';
+import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Menu } from "lucide-react";
+import { useEffect, useState } from "react";
+import { LoginButton } from "./LoginButton";
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -14,15 +14,15 @@ export function Header() {
       setIsScrolled(window.scrollY > 20);
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const scrollToSection = (id: string) => {
     setShowGalleryPage(false);
     const element = document.querySelector(id);
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+      element.scrollIntoView({ behavior: "smooth" });
       setIsOpen(false);
     }
   };
@@ -30,30 +30,47 @@ export function Header() {
   const handleGalleryClick = () => {
     setShowGalleryPage(true);
     setIsOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const menuItems = [
-    { label: 'Beranda', href: '#home', action: () => scrollToSection('#home') },
-    { label: 'Layanan', href: '#services', action: () => scrollToSection('#services') },
-    { label: 'Kontak', href: '#contact', action: () => scrollToSection('#contact') },
-    { label: 'Galeri & Pengaturan Gambar', href: '#gallery', action: handleGalleryClick },
+    { label: "Beranda", href: "#home", action: () => scrollToSection("#home") },
+    {
+      label: "Layanan",
+      href: "#services",
+      action: () => scrollToSection("#services"),
+    },
+    {
+      label: "Kontak",
+      href: "#contact",
+      action: () => scrollToSection("#contact"),
+    },
+    {
+      label: "Galeri & Pengaturan Gambar",
+      href: "#gallery",
+      action: handleGalleryClick,
+    },
   ];
 
   useEffect(() => {
-    window.dispatchEvent(new CustomEvent('galleryPageChange', { detail: { showGalleryPage } }));
+    window.dispatchEvent(
+      new CustomEvent("galleryPageChange", { detail: { showGalleryPage } }),
+    );
   }, [showGalleryPage]);
 
   return (
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-background/95 backdrop-blur-md shadow-md' : 'bg-background/80 backdrop-blur-sm'
+        isScrolled
+          ? "bg-background/95 backdrop-blur-md shadow-md"
+          : "bg-background/80 backdrop-blur-sm"
       }`}
     >
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16 md:h-20">
           <button
-            onClick={() => scrollToSection('#home')}
+            type="button"
+            onClick={() => scrollToSection("#home")}
             className="flex items-center gap-3 hover:opacity-90 transition-all duration-300 group"
           >
             <div className="relative">
@@ -77,6 +94,7 @@ export function Header() {
           <nav className="hidden lg:flex items-center gap-4">
             {menuItems.map((item) => (
               <button
+                type="button"
                 key={item.href}
                 onClick={item.action}
                 className="text-foreground/80 hover:text-primary transition-colors font-medium"
@@ -99,6 +117,7 @@ export function Header() {
                 <nav className="flex flex-col gap-4 mt-8">
                   {menuItems.map((item) => (
                     <button
+                      type="button"
                       key={item.href}
                       onClick={item.action}
                       className="text-lg text-left py-2 hover:text-primary transition-colors"

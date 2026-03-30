@@ -1,33 +1,85 @@
-import { useState, useEffect } from 'react';
-import { useGetServicesByCategory, useGetServicesByStoreSubcategory, useCreateService, useCreateStoreSubcategoryService, useUpdateService, useUpdateStoreSubcategoryService, useDeleteService, useDeleteStoreSubcategoryService, useUploadServiceImage, useUploadStoreSubcategoryServiceImage, useIsCallerAdmin } from '../hooks/useQueries';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Plus, Edit2, Trash2, Upload, Store, Globe, Image as ImageIcon, X, Info, Users, UserCog } from 'lucide-react';
-import { SiWhatsapp } from 'react-icons/si';
-import { toast } from 'sonner';
-import { ServiceCategory, StoreServiceCategory, ExternalBlob, AspectRatioOption } from '../backend';
-import type { Service, StoreSubcategoryService } from '../backend';
-import { processImageWithAspectRatio, validateImageFile, formatFileSize } from '../lib/imageProcessor';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Edit2,
+  Globe,
+  Image as ImageIcon,
+  Info,
+  Plus,
+  Store,
+  Trash2,
+  Upload,
+  UserCog,
+  Users,
+  X,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { SiWhatsapp } from "react-icons/si";
+import { toast } from "sonner";
+import {
+  AspectRatioOption,
+  ExternalBlob,
+  ServiceCategory,
+  StoreServiceCategory,
+} from "../backend";
+import type { Service, StoreSubcategoryService } from "../backend";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import {
+  useCreateService,
+  useCreateStoreSubcategoryService,
+  useDeleteService,
+  useDeleteStoreSubcategoryService,
+  useGetServicesByCategory,
+  useGetServicesByStoreSubcategory,
+  useIsCallerAdmin,
+  useUpdateService,
+  useUpdateStoreSubcategoryService,
+  useUploadServiceImage,
+  useUploadStoreSubcategoryServiceImage,
+} from "../hooks/useQueries";
+import {
+  formatFileSize,
+  processImageWithAspectRatio,
+  validateImageFile,
+} from "../lib/imageProcessor";
 
-type AspectRatioChoice = '1:1' | '4:3' | '9:16';
+type AspectRatioChoice = "1:1" | "4:3" | "9:16";
 
-const WHATSAPP_NUMBER = '6285716733929';
+const WHATSAPP_NUMBER = "6285716733929";
 
 export function ServicesWithPricing() {
   const { identity } = useInternetIdentity();
   const { data: isAdmin } = useIsCallerAdmin();
-  const { data: onlineServices, isLoading: onlineLoading } = useGetServicesByCategory(ServiceCategory.online);
-  const { data: selfServices, isLoading: selfLoading } = useGetServicesByStoreSubcategory(StoreServiceCategory.selfService);
-  const { data: operatorServices, isLoading: operatorLoading } = useGetServicesByStoreSubcategory(StoreServiceCategory.operatorService);
-  
+  const { data: onlineServices, isLoading: onlineLoading } =
+    useGetServicesByCategory(ServiceCategory.online);
+  const { data: selfServices, isLoading: selfLoading } =
+    useGetServicesByStoreSubcategory(StoreServiceCategory.selfService);
+  const { data: operatorServices, isLoading: operatorLoading } =
+    useGetServicesByStoreSubcategory(StoreServiceCategory.operatorService);
+
   const createService = useCreateService();
   const createStoreSubcategoryService = useCreateStoreSubcategoryService();
   const updateService = useUpdateService();
@@ -35,29 +87,50 @@ export function ServicesWithPricing() {
   const deleteService = useDeleteService();
   const deleteStoreSubcategoryService = useDeleteStoreSubcategoryService();
   const uploadServiceImage = useUploadServiceImage();
-  const uploadStoreSubcategoryServiceImage = useUploadStoreSubcategoryServiceImage();
+  const uploadStoreSubcategoryServiceImage =
+    useUploadStoreSubcategoryServiceImage();
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [imageUploadDialogOpen, setImageUploadDialogOpen] = useState(false);
-  
-  const [selectedCategory, setSelectedCategory] = useState<ServiceCategory | null>(null);
-  const [selectedStoreSubcategory, setSelectedStoreSubcategory] = useState<StoreServiceCategory | null>(null);
-  const [editingService, setEditingService] = useState<Service | StoreSubcategoryService | null>(null);
-  const [editingServiceType, setEditingServiceType] = useState<'online' | 'store'>('online');
-  const [deletingService, setDeletingService] = useState<Service | StoreSubcategoryService | null>(null);
-  const [deletingServiceType, setDeletingServiceType] = useState<'online' | 'store'>('online');
-  const [uploadingService, setUploadingService] = useState<Service | StoreSubcategoryService | null>(null);
-  const [uploadingServiceType, setUploadingServiceType] = useState<'online' | 'store'>('online');
-  
-  const [formData, setFormData] = useState({ name: '', description: '', price: '' });
+
+  const [selectedCategory, setSelectedCategory] =
+    useState<ServiceCategory | null>(null);
+  const [selectedStoreSubcategory, setSelectedStoreSubcategory] =
+    useState<StoreServiceCategory | null>(null);
+  const [editingService, setEditingService] = useState<
+    Service | StoreSubcategoryService | null
+  >(null);
+  const [editingServiceType, setEditingServiceType] = useState<
+    "online" | "store"
+  >("online");
+  const [deletingService, setDeletingService] = useState<
+    Service | StoreSubcategoryService | null
+  >(null);
+  const [deletingServiceType, setDeletingServiceType] = useState<
+    "online" | "store"
+  >("online");
+  const [uploadingService, setUploadingService] = useState<
+    Service | StoreSubcategoryService | null
+  >(null);
+  const [uploadingServiceType, setUploadingServiceType] = useState<
+    "online" | "store"
+  >("online");
+
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+  });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioChoice>('1:1');
+  const [selectedAspectRatio, setSelectedAspectRatio] =
+    useState<AspectRatioChoice>("1:1");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
   useEffect(() => {
     if (selectedFile && previewUrl) {
       URL.revokeObjectURL(previewUrl);
@@ -67,81 +140,89 @@ export function ServicesWithPricing() {
   }, [selectedAspectRatio]);
 
   const formatPrice = (price: bigint) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
     }).format(Number(price));
   };
 
-  const getAspectRatioClass = (ratio: AspectRatioChoice) => {
+  const _getAspectRatioClass = (ratio: AspectRatioChoice) => {
     switch (ratio) {
-      case '1:1':
-        return 'aspect-square';
-      case '4:3':
-        return 'aspect-[4/3]';
-      case '9:16':
-        return 'aspect-[9/16]';
+      case "1:1":
+        return "aspect-square";
+      case "4:3":
+        return "aspect-[4/3]";
+      case "9:16":
+        return "aspect-[9/16]";
       default:
-        return 'aspect-square';
+        return "aspect-square";
     }
   };
 
-  const getAspectRatioLabel = (ratio: AspectRatioChoice) => {
+  const _getAspectRatioLabel = (ratio: AspectRatioChoice) => {
     switch (ratio) {
-      case '1:1':
-        return 'Persegi (1:1)';
-      case '4:3':
-        return 'Landscape (4:3)';
-      case '9:16':
-        return 'Vertikal (9:16)';
+      case "1:1":
+        return "Persegi (1:1)";
+      case "4:3":
+        return "Landscape (4:3)";
+      case "9:16":
+        return "Vertikal (9:16)";
       default:
         return ratio;
     }
   };
 
-  const mapAspectRatioToEnum = (ratio: AspectRatioChoice): AspectRatioOption => {
+  const mapAspectRatioToEnum = (
+    ratio: AspectRatioChoice,
+  ): AspectRatioOption => {
     switch (ratio) {
-      case '1:1':
+      case "1:1":
         return AspectRatioOption.square;
-      case '4:3':
+      case "4:3":
         return AspectRatioOption.landscape;
-      case '9:16':
+      case "9:16":
         return AspectRatioOption.portrait;
       default:
         return AspectRatioOption.square;
     }
   };
 
-  const mapEnumToAspectRatio = (aspectRatio: AspectRatioOption): AspectRatioChoice => {
+  const mapEnumToAspectRatio = (
+    aspectRatio: AspectRatioOption,
+  ): AspectRatioChoice => {
     switch (aspectRatio) {
       case AspectRatioOption.square:
-        return '1:1';
+        return "1:1";
       case AspectRatioOption.landscape:
-        return '4:3';
+        return "4:3";
       case AspectRatioOption.portrait:
-        return '9:16';
+        return "9:16";
       default:
-        return '1:1';
+        return "1:1";
     }
   };
 
-  const getServiceImageAspectRatio = (service: Service | StoreSubcategoryService): AspectRatioChoice => {
-    if (!service.image) return '1:1';
+  const _getServiceImageAspectRatio = (
+    service: Service | StoreSubcategoryService,
+  ): AspectRatioChoice => {
+    if (!service.image) return "1:1";
     return mapEnumToAspectRatio(service.image.aspectRatio);
   };
 
   // Calculate adaptive image container size based on text content length
-  const calculateImageSize = (service: Service | StoreSubcategoryService): string => {
+  const calculateImageSize = (
+    service: Service | StoreSubcategoryService,
+  ): string => {
     const textLength = service.name.length + service.description.length;
-    
+
     // Size ranges from 120px to 200px based on text length
     // Short text (< 50 chars): smaller image (120px)
     // Medium text (50-100 chars): medium image (150px)
     // Long text (100-150 chars): larger image (180px)
     // Very long text (> 150 chars): largest image (200px)
     let size = 120;
-    
+
     if (textLength < 50) {
       size = 120;
     } else if (textLength < 100) {
@@ -151,7 +232,7 @@ export function ServicesWithPricing() {
     } else {
       size = 200;
     }
-    
+
     return `${size}px`;
   };
 
@@ -164,7 +245,7 @@ export function ServicesWithPricing() {
 
   const handleCreateService = async () => {
     if (!formData.name || !formData.description || !formData.price) {
-      toast.error('Nama, deskripsi, dan harga harus diisi');
+      toast.error("Nama, deskripsi, dan harga harus diisi");
       return;
     }
 
@@ -173,26 +254,26 @@ export function ServicesWithPricing() {
         await createService.mutateAsync({
           name: formData.name,
           description: formData.description,
-          price: BigInt(parseInt(formData.price)),
+          price: BigInt(Number.parseInt(formData.price)),
           category: selectedCategory,
         });
       } else if (selectedStoreSubcategory) {
         await createStoreSubcategoryService.mutateAsync({
           name: formData.name,
           description: formData.description,
-          price: BigInt(parseInt(formData.price)),
+          price: BigInt(Number.parseInt(formData.price)),
           subcategory: selectedStoreSubcategory,
         });
       }
 
-      toast.success('Layanan berhasil ditambahkan');
+      toast.success("Layanan berhasil ditambahkan");
       setCreateDialogOpen(false);
-      setFormData({ name: '', description: '', price: '' });
+      setFormData({ name: "", description: "", price: "" });
       setSelectedCategory(null);
       setSelectedStoreSubcategory(null);
     } catch (error: any) {
-      console.error('Create error:', error);
-      toast.error(error.message || 'Gagal menambahkan layanan');
+      console.error("Create error:", error);
+      toast.error(error.message || "Gagal menambahkan layanan");
     }
   };
 
@@ -200,29 +281,29 @@ export function ServicesWithPricing() {
     if (!editingService) return;
 
     try {
-      if (editingServiceType === 'online') {
+      if (editingServiceType === "online") {
         await updateService.mutateAsync({
           id: editingService.id,
           name: formData.name,
           description: formData.description,
-          price: BigInt(parseInt(formData.price || '0')),
+          price: BigInt(Number.parseInt(formData.price || "0")),
         });
       } else {
         await updateStoreSubcategoryService.mutateAsync({
           id: editingService.id,
           name: formData.name,
           description: formData.description,
-          price: BigInt(parseInt(formData.price || '0')),
+          price: BigInt(Number.parseInt(formData.price || "0")),
         });
       }
 
-      toast.success('Layanan berhasil diperbarui');
+      toast.success("Layanan berhasil diperbarui");
       setEditDialogOpen(false);
       setEditingService(null);
-      setFormData({ name: '', description: '', price: '' });
+      setFormData({ name: "", description: "", price: "" });
     } catch (error: any) {
-      console.error('Update error:', error);
-      toast.error(error.message || 'Gagal memperbarui layanan');
+      console.error("Update error:", error);
+      toast.error(error.message || "Gagal memperbarui layanan");
     }
   };
 
@@ -230,17 +311,17 @@ export function ServicesWithPricing() {
     if (!deletingService) return;
 
     try {
-      if (deletingServiceType === 'online') {
+      if (deletingServiceType === "online") {
         await deleteService.mutateAsync(deletingService.id);
       } else {
         await deleteStoreSubcategoryService.mutateAsync(deletingService.id);
       }
-      toast.success('Layanan berhasil dihapus');
+      toast.success("Layanan berhasil dihapus");
       setDeleteDialogOpen(false);
       setDeletingService(null);
     } catch (error: any) {
-      console.error('Delete error:', error);
-      toast.error(error.message || 'Gagal menghapus layanan');
+      console.error("Delete error:", error);
+      toast.error(error.message || "Gagal menghapus layanan");
     }
   };
 
@@ -261,22 +342,25 @@ export function ServicesWithPricing() {
 
   const handleUploadImage = async () => {
     if (!selectedFile || !uploadingService) {
-      toast.error('Mohon pilih gambar terlebih dahulu');
+      toast.error("Mohon pilih gambar terlebih dahulu");
       return;
     }
 
     try {
       setIsProcessing(true);
-      toast.info('Memproses gambar...', { duration: 2000 });
+      toast.info("Memproses gambar...", { duration: 2000 });
 
       const processedImage = await processImageWithAspectRatio(
-        selectedFile, 
+        selectedFile,
         selectedAspectRatio,
         1080,
-        0.85
+        0.85,
       );
-      
-      toast.success(`Gambar diproses: ${formatFileSize(processedImage.fileSizeBytes)}`, { duration: 2000 });
+
+      toast.success(
+        `Gambar diproses: ${formatFileSize(processedImage.fileSizeBytes)}`,
+        { duration: 2000 },
+      );
 
       setUploadProgress(0);
       let externalBlob = ExternalBlob.fromBytes(processedImage.blob);
@@ -284,7 +368,7 @@ export function ServicesWithPricing() {
         setUploadProgress(percentage);
       });
 
-      if (uploadingServiceType === 'online') {
+      if (uploadingServiceType === "online") {
         await uploadServiceImage.mutateAsync({
           id: uploadingService.id,
           image: externalBlob,
@@ -304,11 +388,13 @@ export function ServicesWithPricing() {
         });
       }
 
-      toast.success('Gambar berhasil diunggah!');
+      toast.success("Gambar berhasil diunggah!");
       resetImageUploadDialog();
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Gagal mengunggah gambar. Silakan coba lagi.');
+      console.error("Upload error:", error);
+      toast.error(
+        error.message || "Gagal mengunggah gambar. Silakan coba lagi.",
+      );
       setUploadProgress(0);
     } finally {
       setIsProcessing(false);
@@ -325,10 +411,13 @@ export function ServicesWithPricing() {
     setUploadingService(null);
     setUploadProgress(0);
     setIsProcessing(false);
-    setSelectedAspectRatio('1:1');
+    setSelectedAspectRatio("1:1");
   };
 
-  const openEditDialog = (service: Service | StoreSubcategoryService, type: 'online' | 'store') => {
+  const openEditDialog = (
+    service: Service | StoreSubcategoryService,
+    type: "online" | "store",
+  ) => {
     setEditingService(service);
     setEditingServiceType(type);
     setFormData({
@@ -339,14 +428,17 @@ export function ServicesWithPricing() {
     setEditDialogOpen(true);
   };
 
-  const openImageUploadDialog = (service: Service | StoreSubcategoryService, type: 'online' | 'store') => {
+  const openImageUploadDialog = (
+    service: Service | StoreSubcategoryService,
+    type: "online" | "store",
+  ) => {
     setUploadingService(service);
     setUploadingServiceType(type);
     setSelectedFile(null);
     setPreviewUrl(null);
     setUploadProgress(0);
     setIsProcessing(false);
-    setSelectedAspectRatio('1:1');
+    setSelectedAspectRatio("1:1");
     setImageUploadDialogOpen(true);
   };
 
@@ -358,14 +450,25 @@ export function ServicesWithPricing() {
     setPreviewUrl(null);
   };
 
-  const renderServiceCard = (service: Service | StoreSubcategoryService, type: 'online' | 'store') => {
+  const renderServiceCard = (
+    service: Service | StoreSubcategoryService,
+    type: "online" | "store",
+  ) => {
     const imageSize = calculateImageSize(service);
-    
+
     return (
-      <Card key={Number(service.id)} className="luxury-card border-sky-200/50 overflow-hidden hover:scale-105 transition-all duration-300 flex flex-col">
-        <div 
+      <Card
+        key={Number(service.id)}
+        className="luxury-card border-sky-200/50 overflow-hidden hover:scale-105 transition-all duration-300 flex flex-col"
+      >
+        <div
           className="relative overflow-hidden bg-gradient-to-br from-sky-50 to-blue-50 flex items-center justify-center flex-shrink-0"
-          style={{ width: imageSize, height: imageSize, margin: '0 auto', marginTop: '1rem' }}
+          style={{
+            width: imageSize,
+            height: imageSize,
+            margin: "0 auto",
+            marginTop: "1rem",
+          }}
         >
           {service.image?.image ? (
             <img
@@ -384,13 +487,15 @@ export function ServicesWithPricing() {
           <CardTitle className="text-xl text-sky-900">{service.name}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4 flex-grow flex flex-col">
-          <p className="text-sm text-sky-700/80 leading-relaxed flex-grow">{service.description}</p>
+          <p className="text-sm text-sky-700/80 leading-relaxed flex-grow">
+            {service.description}
+          </p>
           <div className="flex items-baseline gap-1">
             <span className="text-2xl font-bold bg-gradient-to-r from-sky-700 to-blue-700 bg-clip-text text-transparent">
               {formatPrice(service.price)}
             </span>
           </div>
-          
+
           {/* WhatsApp Order Button */}
           <Button
             className="w-full bg-gradient-to-r from-[#25D366] to-[#128C7E] hover:from-[#20BA5A] hover:to-[#0F7A6C] text-white shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
@@ -473,11 +578,14 @@ export function ServicesWithPricing() {
 
   return (
     <>
-      <section id="services" className="py-24 gradient-luxury-blue relative overflow-hidden">
+      <section
+        id="services"
+        className="py-24 gradient-luxury-blue relative overflow-hidden"
+      >
         {/* Decorative elements */}
-        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-sky-400/20 to-transparent rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-blue-400/20 to-transparent rounded-full blur-3xl"></div>
-        
+        <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-sky-400/20 to-transparent rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-tl from-blue-400/20 to-transparent rounded-full blur-3xl" />
+
         <div className="container mx-auto px-4 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-sky-800 via-blue-700 to-cyan-700 bg-clip-text text-transparent">
@@ -497,8 +605,13 @@ export function ServicesWithPricing() {
                     <Globe className="h-7 w-7 text-sky-600" />
                   </div>
                   <div>
-                    <h3 className="text-3xl font-bold text-sky-900">Layanan Online ({onlineCount})</h3>
-                    <p className="text-sky-700/80 mt-1">Layanan yang dapat dipesan secara online dengan penjemputan</p>
+                    <h3 className="text-3xl font-bold text-sky-900">
+                      Layanan Online ({onlineCount})
+                    </h3>
+                    <p className="text-sky-700/80 mt-1">
+                      Layanan yang dapat dipesan secara online dengan
+                      penjemputan
+                    </p>
                   </div>
                 </div>
                 {isAdmin && identity && (
@@ -524,7 +637,9 @@ export function ServicesWithPricing() {
                     </CardContent>
                   </Card>
                 ) : (
-                  onlineServices.map((service) => renderServiceCard(service, 'online'))
+                  onlineServices.map((service) =>
+                    renderServiceCard(service, "online"),
+                  )
                 )}
               </div>
             </div>
@@ -536,8 +651,12 @@ export function ServicesWithPricing() {
                   <Store className="h-7 w-7 text-emerald-600" />
                 </div>
                 <div>
-                  <h3 className="text-3xl font-bold text-sky-900">Layanan di Tempat</h3>
-                  <p className="text-sky-700/80 mt-1">Layanan yang tersedia dengan mengunjungi lokasi kami</p>
+                  <h3 className="text-3xl font-bold text-sky-900">
+                    Layanan di Tempat
+                  </h3>
+                  <p className="text-sky-700/80 mt-1">
+                    Layanan yang tersedia dengan mengunjungi lokasi kami
+                  </p>
                 </div>
               </div>
 
@@ -550,7 +669,9 @@ export function ServicesWithPricing() {
                         <Users className="h-6 w-6 text-blue-600" />
                       </div>
                       <div>
-                        <h4 className="text-xl font-semibold text-sky-900">Layanan Laundry Self Service ({selfCount})</h4>
+                        <h4 className="text-xl font-semibold text-sky-900">
+                          Layanan Laundry Self Service ({selfCount})
+                        </h4>
                       </div>
                     </div>
                     {isAdmin && identity && (
@@ -560,7 +681,9 @@ export function ServicesWithPricing() {
                         className="border-sky-300 text-sky-700 hover:bg-sky-50"
                         onClick={() => {
                           setSelectedCategory(null);
-                          setSelectedStoreSubcategory(StoreServiceCategory.selfService);
+                          setSelectedStoreSubcategory(
+                            StoreServiceCategory.selfService,
+                          );
                           setCreateDialogOpen(true);
                         }}
                       >
@@ -577,7 +700,9 @@ export function ServicesWithPricing() {
                         </CardContent>
                       </Card>
                     ) : (
-                      selfServices.map((service) => renderServiceCard(service, 'store'))
+                      selfServices.map((service) =>
+                        renderServiceCard(service, "store"),
+                      )
                     )}
                   </div>
                 </div>
@@ -590,7 +715,9 @@ export function ServicesWithPricing() {
                         <UserCog className="h-6 w-6 text-green-600" />
                       </div>
                       <div>
-                        <h4 className="text-xl font-semibold text-sky-900">Layanan Laundry Operator Service ({operatorCount})</h4>
+                        <h4 className="text-xl font-semibold text-sky-900">
+                          Layanan Laundry Operator Service ({operatorCount})
+                        </h4>
                       </div>
                     </div>
                     {isAdmin && identity && (
@@ -600,7 +727,9 @@ export function ServicesWithPricing() {
                         className="border-sky-300 text-sky-700 hover:bg-sky-50"
                         onClick={() => {
                           setSelectedCategory(null);
-                          setSelectedStoreSubcategory(StoreServiceCategory.operatorService);
+                          setSelectedStoreSubcategory(
+                            StoreServiceCategory.operatorService,
+                          );
                           setCreateDialogOpen(true);
                         }}
                       >
@@ -617,7 +746,9 @@ export function ServicesWithPricing() {
                         </CardContent>
                       </Card>
                     ) : (
-                      operatorServices.map((service) => renderServiceCard(service, 'store'))
+                      operatorServices.map((service) =>
+                        renderServiceCard(service, "store"),
+                      )
                     )}
                   </div>
                 </div>
@@ -631,55 +762,84 @@ export function ServicesWithPricing() {
       <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
         <DialogContent className="luxury-card">
           <DialogHeader>
-            <DialogTitle className="text-sky-900">Tambah Layanan Baru</DialogTitle>
+            <DialogTitle className="text-sky-900">
+              Tambah Layanan Baru
+            </DialogTitle>
             <DialogDescription>
-              Tambahkan layanan {selectedCategory === ServiceCategory.online ? 'online' : selectedStoreSubcategory === StoreServiceCategory.selfService ? 'self service' : 'operator service'} baru
+              Tambahkan layanan{" "}
+              {selectedCategory === ServiceCategory.online
+                ? "online"
+                : selectedStoreSubcategory === StoreServiceCategory.selfService
+                  ? "self service"
+                  : "operator service"}{" "}
+              baru
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sky-900 font-medium">Nama Layanan</Label>
+              <Label htmlFor="name" className="text-sky-900 font-medium">
+                Nama Layanan
+              </Label>
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 placeholder="Contoh: Cuci Reguler"
                 className="border-sky-200 focus:border-sky-400 focus:ring-sky-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description" className="text-sky-900 font-medium">Deskripsi</Label>
+              <Label htmlFor="description" className="text-sky-900 font-medium">
+                Deskripsi
+              </Label>
               <Textarea
                 id="description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 placeholder="Deskripsi layanan..."
                 rows={3}
                 className="border-sky-200 focus:border-sky-400 focus:ring-sky-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="price" className="text-sky-900 font-medium">Harga (IDR)</Label>
+              <Label htmlFor="price" className="text-sky-900 font-medium">
+                Harga (IDR)
+              </Label>
               <Input
                 id="price"
                 type="number"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: e.target.value })
+                }
                 placeholder="35000"
                 className="border-sky-200 focus:border-sky-400 focus:ring-sky-400"
               />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setCreateDialogOpen(false)}
+            >
               Batal
             </Button>
-            <Button 
-              onClick={handleCreateService} 
-              disabled={createService.isPending || createStoreSubcategoryService.isPending}
+            <Button
+              onClick={handleCreateService}
+              disabled={
+                createService.isPending ||
+                createStoreSubcategoryService.isPending
+              }
               className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700"
             >
-              {(createService.isPending || createStoreSubcategoryService.isPending) ? 'Menambahkan...' : 'Tambah Layanan'}
+              {createService.isPending ||
+              createStoreSubcategoryService.isPending
+                ? "Menambahkan..."
+                : "Tambah Layanan"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -690,37 +850,50 @@ export function ServicesWithPricing() {
         <DialogContent className="luxury-card">
           <DialogHeader>
             <DialogTitle className="text-sky-900">Edit Layanan</DialogTitle>
-            <DialogDescription>
-              Perbarui informasi layanan
-            </DialogDescription>
+            <DialogDescription>Perbarui informasi layanan</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-name" className="text-sky-900 font-medium">Nama Layanan</Label>
+              <Label htmlFor="edit-name" className="text-sky-900 font-medium">
+                Nama Layanan
+              </Label>
               <Input
                 id="edit-name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
                 className="border-sky-200 focus:border-sky-400 focus:ring-sky-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-description" className="text-sky-900 font-medium">Deskripsi</Label>
+              <Label
+                htmlFor="edit-description"
+                className="text-sky-900 font-medium"
+              >
+                Deskripsi
+              </Label>
               <Textarea
                 id="edit-description"
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
                 rows={3}
                 className="border-sky-200 focus:border-sky-400 focus:ring-sky-400"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-price" className="text-sky-900 font-medium">Harga (IDR)</Label>
+              <Label htmlFor="edit-price" className="text-sky-900 font-medium">
+                Harga (IDR)
+              </Label>
               <Input
                 id="edit-price"
                 type="number"
                 value={formData.price}
-                onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: e.target.value })
+                }
                 className="border-sky-200 focus:border-sky-400 focus:ring-sky-400"
               />
             </div>
@@ -729,12 +902,18 @@ export function ServicesWithPricing() {
             <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
               Batal
             </Button>
-            <Button 
-              onClick={handleUpdateService} 
-              disabled={updateService.isPending || updateStoreSubcategoryService.isPending}
+            <Button
+              onClick={handleUpdateService}
+              disabled={
+                updateService.isPending ||
+                updateStoreSubcategoryService.isPending
+              }
               className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700"
             >
-              {(updateService.isPending || updateStoreSubcategoryService.isPending) ? 'Menyimpan...' : 'Simpan'}
+              {updateService.isPending ||
+              updateStoreSubcategoryService.isPending
+                ? "Menyimpan..."
+                : "Simpan"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -744,9 +923,12 @@ export function ServicesWithPricing() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="luxury-card">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-sky-900">Hapus Layanan?</AlertDialogTitle>
+            <AlertDialogTitle className="text-sky-900">
+              Hapus Layanan?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus layanan "{deletingService?.name}"? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus layanan "{deletingService?.name}
+              "? Tindakan ini tidak dapat dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -762,17 +944,22 @@ export function ServicesWithPricing() {
       </AlertDialog>
 
       {/* Image Upload Dialog */}
-      <Dialog open={imageUploadDialogOpen} onOpenChange={(open) => {
-        if (!open) resetImageUploadDialog();
-        setImageUploadDialogOpen(open);
-      }}>
+      <Dialog
+        open={imageUploadDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) resetImageUploadDialog();
+          setImageUploadDialogOpen(open);
+        }}
+      >
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto luxury-card">
           <DialogHeader>
-            <DialogTitle className="text-sky-900">Upload Foto Layanan</DialogTitle>
+            <DialogTitle className="text-sky-900">
+              Upload Foto Layanan
+            </DialogTitle>
             <DialogDescription>
               {uploadingService?.image?.image
-                ? 'Ganti foto untuk layanan ini. Foto lama akan diganti dengan yang baru.'
-                : 'Tambahkan foto untuk layanan ini'}
+                ? "Ganti foto untuk layanan ini. Foto lama akan diganti dengan yang baru."
+                : "Tambahkan foto untuk layanan ini"}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -793,8 +980,16 @@ export function ServicesWithPricing() {
             {/* Current Image Preview */}
             {uploadingService?.image?.image && !selectedFile && (
               <div className="space-y-2">
-                <Label className="text-sm font-medium text-sky-900">Foto Saat Ini</Label>
-                <div className="rounded-lg overflow-hidden border bg-muted mx-auto" style={{ width: calculateImageSize(uploadingService), height: calculateImageSize(uploadingService) }}>
+                <Label className="text-sm font-medium text-sky-900">
+                  Foto Saat Ini
+                </Label>
+                <div
+                  className="rounded-lg overflow-hidden border bg-muted mx-auto"
+                  style={{
+                    width: calculateImageSize(uploadingService),
+                    height: calculateImageSize(uploadingService),
+                  }}
+                >
                   <img
                     src={uploadingService.image.image.getDirectURL()}
                     alt={uploadingService.name}
@@ -811,7 +1006,9 @@ export function ServicesWithPricing() {
             {!selectedFile ? (
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-sky-900">
-                  {uploadingService?.image?.image ? 'Pilih Foto Baru' : 'Pilih Foto'}
+                  {uploadingService?.image?.image
+                    ? "Pilih Foto Baru"
+                    : "Pilih Foto"}
                 </Label>
                 <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary/50 transition-colors">
                   <div className="flex flex-col items-center gap-4">
@@ -843,19 +1040,32 @@ export function ServicesWithPricing() {
             ) : (
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium text-sky-900">Pratinjau Foto Baru</Label>
+                  <Label className="text-sm font-medium text-sky-900">
+                    Pratinjau Foto Baru
+                  </Label>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={clearSelectedFile}
-                    disabled={uploadServiceImage.isPending || uploadStoreSubcategoryServiceImage.isPending || isProcessing}
+                    disabled={
+                      uploadServiceImage.isPending ||
+                      uploadStoreSubcategoryServiceImage.isPending ||
+                      isProcessing
+                    }
                   >
                     <X className="h-4 w-4 mr-1" />
                     Hapus
                   </Button>
                 </div>
                 {previewUrl && (
-                  <div className="rounded-lg overflow-hidden border bg-muted mx-auto aspect-square" style={{ width: uploadingService ? calculateImageSize(uploadingService) : '150px' }}>
+                  <div
+                    className="rounded-lg overflow-hidden border bg-muted mx-auto aspect-square"
+                    style={{
+                      width: uploadingService
+                        ? calculateImageSize(uploadingService)
+                        : "150px",
+                    }}
+                  >
                     <img
                       src={previewUrl}
                       alt="Preview"
@@ -868,20 +1078,22 @@ export function ServicesWithPricing() {
                   <p className="text-xs">
                     Ukuran asli: {formatFileSize(selectedFile.size)}
                   </p>
-                  <p className="text-xs">
-                    Akan diproses ke: Persegi (1:1)
-                  </p>
+                  <p className="text-xs">Akan diproses ke: Persegi (1:1)</p>
                 </div>
                 {(uploadProgress > 0 || isProcessing) && (
                   <div className="space-y-2">
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary transition-all duration-300"
-                        style={{ width: isProcessing ? '50%' : `${uploadProgress}%` }}
+                        style={{
+                          width: isProcessing ? "50%" : `${uploadProgress}%`,
+                        }}
                       />
                     </div>
                     <p className="text-sm text-center text-muted-foreground">
-                      {isProcessing ? 'Memproses foto...' : `Mengunggah... ${uploadProgress}%`}
+                      {isProcessing
+                        ? "Memproses foto..."
+                        : `Mengunggah... ${uploadProgress}%`}
                     </p>
                   </div>
                 )}
@@ -892,16 +1104,30 @@ export function ServicesWithPricing() {
             <Button
               variant="outline"
               onClick={resetImageUploadDialog}
-              disabled={uploadServiceImage.isPending || uploadStoreSubcategoryServiceImage.isPending || isProcessing}
+              disabled={
+                uploadServiceImage.isPending ||
+                uploadStoreSubcategoryServiceImage.isPending ||
+                isProcessing
+              }
             >
               Batal
             </Button>
             <Button
               onClick={handleUploadImage}
-              disabled={!selectedFile || uploadServiceImage.isPending || uploadStoreSubcategoryServiceImage.isPending || isProcessing}
+              disabled={
+                !selectedFile ||
+                uploadServiceImage.isPending ||
+                uploadStoreSubcategoryServiceImage.isPending ||
+                isProcessing
+              }
               className="bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700"
             >
-              {isProcessing ? 'Memproses...' : (uploadServiceImage.isPending || uploadStoreSubcategoryServiceImage.isPending) ? 'Mengunggah...' : 'Upload Foto'}
+              {isProcessing
+                ? "Memproses..."
+                : uploadServiceImage.isPending ||
+                    uploadStoreSubcategoryServiceImage.isPending
+                  ? "Mengunggah..."
+                  : "Upload Foto"}
             </Button>
           </DialogFooter>
         </DialogContent>

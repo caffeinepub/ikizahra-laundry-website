@@ -6,11 +6,11 @@ import Time "mo:core/Time";
 import Storage "blob-storage/Storage";
 import Iter "mo:core/Iter";
 import MixinStorage "blob-storage/Mixin";
-import Migration "migration";
+
 import AccessControl "authorization/access-control";
 import Principal "mo:core/Principal";
 
-(with migration = Migration.run)
+
 actor {
   include MixinStorage();
 

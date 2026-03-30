@@ -1,21 +1,56 @@
-import { useState } from 'react';
-import { useGetOrderedGalleryImages, useUpdateImageDescription, useUploadGalleryImage, useDeleteGalleryImage, useReplaceGalleryImage, useIsCallerAdmin } from '../hooks/useQueries';
-import { useInternetIdentity } from '../hooks/useInternetIdentity';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { ArrowLeft, Edit2, Upload, Trash2, Image as ImageIcon, Info, RefreshCw } from 'lucide-react';
-import { toast } from 'sonner';
-import { ExternalBlob, AspectRatioOption, ImageType } from '../backend';
-import type { ProcessedImage } from '../backend';
-import { processImageWithAspectRatio, validateImageFile, formatFileSize } from '../lib/imageProcessor';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  ArrowLeft,
+  Edit2,
+  Image as ImageIcon,
+  Info,
+  RefreshCw,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { AspectRatioOption, ExternalBlob, ImageType } from "../backend";
+import type { ProcessedImage } from "../backend";
+import { useInternetIdentity } from "../hooks/useInternetIdentity";
+import {
+  useDeleteGalleryImage,
+  useGetOrderedGalleryImages,
+  useIsCallerAdmin,
+  useReplaceGalleryImage,
+  useUpdateImageDescription,
+  useUploadGalleryImage,
+} from "../hooks/useQueries";
+import {
+  formatFileSize,
+  processImageWithAspectRatio,
+  validateImageFile,
+} from "../lib/imageProcessor";
 
-type AspectRatioChoice = '1:1' | '4:3' | '9:16';
+type AspectRatioChoice = "1:1" | "4:3" | "9:16";
 
 interface GalleryManagementPageProps {
   onClose: () => void;
@@ -30,27 +65,39 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
   const deleteGalleryImage = useDeleteGalleryImage();
   const replaceGalleryImage = useReplaceGalleryImage();
 
-  const [editingImage, setEditingImage] = useState<{ id: bigint; description: string } | null>(null);
-  const [deletingImage, setDeletingImage] = useState<ProcessedImage | null>(null);
-  const [replacingImage, setReplacingImage] = useState<ProcessedImage | null>(null);
-  const [newDescription, setNewDescription] = useState('');
+  const [editingImage, setEditingImage] = useState<{
+    id: bigint;
+    description: string;
+  } | null>(null);
+  const [deletingImage, setDeletingImage] = useState<ProcessedImage | null>(
+    null,
+  );
+  const [replacingImage, setReplacingImage] = useState<ProcessedImage | null>(
+    null,
+  );
+  const [newDescription, setNewDescription] = useState("");
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [uploadDesc, setUploadDesc] = useState('');
+  const [uploadDesc, setUploadDesc] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [selectedAspectRatio, setSelectedAspectRatio] = useState<AspectRatioChoice>('4:3');
+  const [selectedAspectRatio, setSelectedAspectRatio] =
+    useState<AspectRatioChoice>("4:3");
 
   // Replace photo dialog state
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
-  const [replacePreviewUrl, setReplacePreviewUrl] = useState<string | null>(null);
-  const [replaceAspectRatio, setReplaceAspectRatio] = useState<AspectRatioChoice>('4:3');
+  const [replacePreviewUrl, setReplacePreviewUrl] = useState<string | null>(
+    null,
+  );
+  const [replaceAspectRatio, setReplaceAspectRatio] =
+    useState<AspectRatioChoice>("4:3");
   const [replaceProgress, setReplaceProgress] = useState(0);
   const [isReplacingProcessing, setIsReplacingProcessing] = useState(false);
 
   // Filter only gallery images
-  const galleryImages = images?.filter(img => img.imageType === ImageType.gallery) || [];
+  const galleryImages =
+    images?.filter((img) => img.imageType === ImageType.gallery) || [];
 
   const handleEditClick = (id: bigint, currentDesc: string) => {
     setEditingImage({ id, description: currentDesc });
@@ -65,12 +112,12 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
         id: editingImage.id,
         description: newDescription,
       });
-      toast.success('Deskripsi berhasil diperbarui');
+      toast.success("Deskripsi berhasil diperbarui");
       setEditingImage(null);
-      setNewDescription('');
+      setNewDescription("");
     } catch (error: any) {
-      console.error('Update error:', error);
-      toast.error(error.message || 'Gagal memperbarui deskripsi');
+      console.error("Update error:", error);
+      toast.error(error.message || "Gagal memperbarui deskripsi");
     }
   };
 
@@ -79,11 +126,11 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
 
     try {
       await deleteGalleryImage.mutateAsync(deletingImage.id);
-      toast.success('Gambar berhasil dihapus');
+      toast.success("Gambar berhasil dihapus");
       setDeletingImage(null);
     } catch (error: any) {
-      console.error('Delete error:', error);
-      toast.error(error.message || 'Gagal menghapus gambar');
+      console.error("Delete error:", error);
+      toast.error(error.message || "Gagal menghapus gambar");
     }
   };
 
@@ -107,17 +154,20 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
 
     try {
       setIsProcessing(true);
-      toast.info('Memproses gambar...', { duration: 2000 });
+      toast.info("Memproses gambar...", { duration: 2000 });
 
       const processedImage = await processImageWithAspectRatio(
         selectedFile,
         selectedAspectRatio,
         1080,
-        0.85
+        0.85,
       );
-      
+
       const aspectRatioEnum = mapAspectRatioToEnum(selectedAspectRatio);
-      toast.success(`Gambar diproses (${getAspectRatioLabel(selectedAspectRatio)}): ${formatFileSize(processedImage.fileSizeBytes)}`, { duration: 2000 });
+      toast.success(
+        `Gambar diproses (${getAspectRatioLabel(selectedAspectRatio)}): ${formatFileSize(processedImage.fileSizeBytes)}`,
+        { duration: 2000 },
+      );
 
       setUploadProgress(0);
       let externalBlob = ExternalBlob.fromBytes(processedImage.blob);
@@ -127,18 +177,18 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
 
       await uploadGalleryImage.mutateAsync({
         image: externalBlob,
-        description: uploadDesc || 'Gambar galeri',
+        description: uploadDesc || "Gambar galeri",
         aspectRatio: aspectRatioEnum,
         fileSizeBytes: BigInt(processedImage.fileSizeBytes),
         width: BigInt(processedImage.width),
         height: BigInt(processedImage.height),
       });
 
-      toast.success('Gambar berhasil diunggah!');
+      toast.success("Gambar berhasil diunggah!");
       resetUploadDialog();
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Gagal mengunggah gambar');
+      console.error("Upload error:", error);
+      toast.error(error.message || "Gagal mengunggah gambar");
       setUploadProgress(0);
     } finally {
       setIsProcessing(false);
@@ -165,17 +215,20 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
 
     try {
       setIsReplacingProcessing(true);
-      toast.info('Memproses gambar baru...', { duration: 2000 });
+      toast.info("Memproses gambar baru...", { duration: 2000 });
 
       const processedImage = await processImageWithAspectRatio(
         replaceFile,
         replaceAspectRatio,
         1080,
-        0.85
+        0.85,
       );
-      
+
       const aspectRatioEnum = mapAspectRatioToEnum(replaceAspectRatio);
-      toast.success(`Gambar diproses (${getAspectRatioLabel(replaceAspectRatio)}): ${formatFileSize(processedImage.fileSizeBytes)}`, { duration: 2000 });
+      toast.success(
+        `Gambar diproses (${getAspectRatioLabel(replaceAspectRatio)}): ${formatFileSize(processedImage.fileSizeBytes)}`,
+        { duration: 2000 },
+      );
 
       setReplaceProgress(0);
       let externalBlob = ExternalBlob.fromBytes(processedImage.blob);
@@ -192,11 +245,11 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
         height: BigInt(processedImage.height),
       });
 
-      toast.success('Foto berhasil diganti!');
+      toast.success("Foto berhasil diganti!");
       resetReplaceDialog();
     } catch (error: any) {
-      console.error('Replace error:', error);
-      toast.error(error.message || 'Gagal mengganti foto');
+      console.error("Replace error:", error);
+      toast.error(error.message || "Gagal mengganti foto");
       setReplaceProgress(0);
     } finally {
       setIsReplacingProcessing(false);
@@ -207,9 +260,9 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
     setUploadDialogOpen(false);
     setSelectedFile(null);
     setPreviewUrl(null);
-    setUploadDesc('');
+    setUploadDesc("");
     setUploadProgress(0);
-    setSelectedAspectRatio('4:3');
+    setSelectedAspectRatio("4:3");
   };
 
   const resetReplaceDialog = () => {
@@ -217,7 +270,7 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
     setReplaceFile(null);
     setReplacePreviewUrl(null);
     setReplaceProgress(0);
-    setReplaceAspectRatio('4:3');
+    setReplaceAspectRatio("4:3");
   };
 
   const openReplaceDialog = (image: ProcessedImage) => {
@@ -227,40 +280,44 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
     setReplaceAspectRatio(currentRatio);
   };
 
-  const mapAspectRatioToEnum = (ratio: AspectRatioChoice): AspectRatioOption => {
+  const mapAspectRatioToEnum = (
+    ratio: AspectRatioChoice,
+  ): AspectRatioOption => {
     switch (ratio) {
-      case '1:1':
+      case "1:1":
         return AspectRatioOption.square;
-      case '4:3':
+      case "4:3":
         return AspectRatioOption.landscape;
-      case '9:16':
+      case "9:16":
         return AspectRatioOption.portrait;
       default:
         return AspectRatioOption.landscape;
     }
   };
 
-  const getAspectRatioChoiceFromEnum = (aspectRatio: AspectRatioOption): AspectRatioChoice => {
+  const getAspectRatioChoiceFromEnum = (
+    aspectRatio: AspectRatioOption,
+  ): AspectRatioChoice => {
     switch (aspectRatio) {
       case AspectRatioOption.square:
-        return '1:1';
+        return "1:1";
       case AspectRatioOption.landscape:
-        return '4:3';
+        return "4:3";
       case AspectRatioOption.portrait:
-        return '9:16';
+        return "9:16";
       default:
-        return '4:3';
+        return "4:3";
     }
   };
 
   const getAspectRatioLabel = (ratio: AspectRatioChoice): string => {
     switch (ratio) {
-      case '1:1':
-        return 'Persegi 1:1';
-      case '4:3':
-        return 'Landscape 4:3';
-      case '9:16':
-        return 'Vertikal 9:16';
+      case "1:1":
+        return "Persegi 1:1";
+      case "4:3":
+        return "Landscape 4:3";
+      case "9:16":
+        return "Vertikal 9:16";
       default:
         return ratio;
     }
@@ -268,29 +325,29 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
 
   const getAspectRatioClass = (ratio: AspectRatioChoice): string => {
     switch (ratio) {
-      case '1:1':
-        return 'aspect-square';
-      case '4:3':
-        return 'aspect-[4/3]';
-      case '9:16':
-        return 'aspect-[9/16]';
+      case "1:1":
+        return "aspect-square";
+      case "4:3":
+        return "aspect-[4/3]";
+      case "9:16":
+        return "aspect-[9/16]";
       default:
-        return 'aspect-[4/3]';
+        return "aspect-[4/3]";
     }
   };
 
   const getAspectRatioDisplay = (aspectRatio: AspectRatioOption): string => {
     switch (aspectRatio) {
       case AspectRatioOption.square:
-        return '1:1';
+        return "1:1";
       case AspectRatioOption.landscape:
-        return '4:3';
+        return "4:3";
       case AspectRatioOption.portrait:
-        return '9:16';
+        return "9:16";
       case AspectRatioOption.original:
-        return 'Asli';
+        return "Asli";
       default:
-        return 'Unknown';
+        return "Unknown";
     }
   };
 
@@ -351,12 +408,17 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
               Galeri & Pengaturan Gambar
             </h1>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Kelola gambar galeri Anda - unggah, edit deskripsi, ganti foto, atau hapus gambar
+              Kelola gambar galeri Anda - unggah, edit deskripsi, ganti foto,
+              atau hapus gambar
             </p>
           </div>
 
           <div className="flex justify-center mb-8">
-            <Button onClick={() => setUploadDialogOpen(true)} size="lg" className="gap-2">
+            <Button
+              onClick={() => setUploadDialogOpen(true)}
+              size="lg"
+              className="gap-2"
+            >
               <Upload className="h-5 w-5" />
               Unggah Gambar Baru
             </Button>
@@ -372,14 +434,18 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
                   Belum ada gambar di galeri
                 </p>
                 <p className="text-sm text-muted-foreground text-center mb-6">
-                  Klik tombol "Unggah Gambar Baru" untuk menambahkan gambar pertama
+                  Klik tombol "Unggah Gambar Baru" untuk menambahkan gambar
+                  pertama
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
               {galleryImages.map((image) => (
-                <Card key={Number(image.id)} className="overflow-hidden group hover:shadow-xl transition-all duration-300">
+                <Card
+                  key={Number(image.id)}
+                  className="overflow-hidden group hover:shadow-xl transition-all duration-300"
+                >
                   <div className="relative overflow-hidden bg-muted aspect-[4/3]">
                     {image.image && (
                       <img
@@ -405,7 +471,9 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
                           variant="outline"
                           size="sm"
                           className="flex-1 gap-2"
-                          onClick={() => handleEditClick(image.id, image.description)}
+                          onClick={() =>
+                            handleEditClick(image.id, image.description)
+                          }
                         >
                           <Edit2 className="h-3 w-3" />
                           Edit
@@ -437,7 +505,10 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
       </section>
 
       {/* Edit Description Dialog */}
-      <Dialog open={!!editingImage} onOpenChange={(open) => !open && setEditingImage(null)}>
+      <Dialog
+        open={!!editingImage}
+        onOpenChange={(open) => !open && setEditingImage(null)}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Edit Deskripsi Gambar</DialogTitle>
@@ -462,21 +533,28 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
             <Button variant="outline" onClick={() => setEditingImage(null)}>
               Batal
             </Button>
-            <Button onClick={handleSaveDescription} disabled={updateDescription.isPending}>
-              {updateDescription.isPending ? 'Menyimpan...' : 'Simpan'}
+            <Button
+              onClick={handleSaveDescription}
+              disabled={updateDescription.isPending}
+            >
+              {updateDescription.isPending ? "Menyimpan..." : "Simpan"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <AlertDialog open={!!deletingImage} onOpenChange={(open) => !open && setDeletingImage(null)}>
+      <AlertDialog
+        open={!!deletingImage}
+        onOpenChange={(open) => !open && setDeletingImage(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus Gambar?</AlertDialogTitle>
             <AlertDialogDescription>
-              Apakah Anda yakin ingin menghapus gambar "{deletingImage?.description}"? 
-              Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus gambar "
+              {deletingImage?.description}"? Tindakan ini tidak dapat
+              dibatalkan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -486,21 +564,25 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
               disabled={deleteGalleryImage.isPending}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {deleteGalleryImage.isPending ? 'Menghapus...' : 'Hapus'}
+              {deleteGalleryImage.isPending ? "Menghapus..." : "Hapus"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
       {/* Replace Photo Dialog */}
-      <Dialog open={!!replacingImage} onOpenChange={(open) => {
-        if (!open) resetReplaceDialog();
-      }}>
+      <Dialog
+        open={!!replacingImage}
+        onOpenChange={(open) => {
+          if (!open) resetReplaceDialog();
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Ganti Foto</DialogTitle>
             <DialogDescription>
-              Pilih foto baru untuk mengganti gambar "{replacingImage?.description}"
+              Pilih foto baru untuk mengganti gambar "
+              {replacingImage?.description}"
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -509,40 +591,60 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
               <Label className="text-sm font-medium">Pilih Rasio Aspek</Label>
               <RadioGroup
                 value={replaceAspectRatio}
-                onValueChange={(value) => setReplaceAspectRatio(value as AspectRatioChoice)}
+                onValueChange={(value) =>
+                  setReplaceAspectRatio(value as AspectRatioChoice)
+                }
                 className="grid grid-cols-3 gap-3"
               >
                 <div>
-                  <RadioGroupItem value="1:1" id="replace-ratio-1-1" className="peer sr-only" />
+                  <RadioGroupItem
+                    value="1:1"
+                    id="replace-ratio-1-1"
+                    className="peer sr-only"
+                  />
                   <Label
                     htmlFor="replace-ratio-1-1"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <div className="w-12 h-12 border-2 border-current rounded mb-2" />
                     <span className="text-xs font-medium">1:1</span>
-                    <span className="text-xs text-muted-foreground">Persegi</span>
+                    <span className="text-xs text-muted-foreground">
+                      Persegi
+                    </span>
                   </Label>
                 </div>
                 <div>
-                  <RadioGroupItem value="4:3" id="replace-ratio-4-3" className="peer sr-only" />
+                  <RadioGroupItem
+                    value="4:3"
+                    id="replace-ratio-4-3"
+                    className="peer sr-only"
+                  />
                   <Label
                     htmlFor="replace-ratio-4-3"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <div className="w-12 h-9 border-2 border-current rounded mb-2" />
                     <span className="text-xs font-medium">4:3</span>
-                    <span className="text-xs text-muted-foreground">Landscape</span>
+                    <span className="text-xs text-muted-foreground">
+                      Landscape
+                    </span>
                   </Label>
                 </div>
                 <div>
-                  <RadioGroupItem value="9:16" id="replace-ratio-9-16" className="peer sr-only" />
+                  <RadioGroupItem
+                    value="9:16"
+                    id="replace-ratio-9-16"
+                    className="peer sr-only"
+                  />
                   <Label
                     htmlFor="replace-ratio-9-16"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <div className="w-7 h-12 border-2 border-current rounded mb-2" />
                     <span className="text-xs font-medium">9:16</span>
-                    <span className="text-xs text-muted-foreground">Vertikal</span>
+                    <span className="text-xs text-muted-foreground">
+                      Vertikal
+                    </span>
                   </Label>
                 </div>
               </RadioGroup>
@@ -552,9 +654,13 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
             <div className="flex gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
               <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-900 dark:text-blue-100">
-                <p className="font-medium mb-1">Foto baru akan diproses otomatis:</p>
+                <p className="font-medium mb-1">
+                  Foto baru akan diproses otomatis:
+                </p>
                 <ul className="list-disc list-inside space-y-0.5 text-xs">
-                  <li>Diubah ke rasio {getAspectRatioLabel(replaceAspectRatio)}</li>
+                  <li>
+                    Diubah ke rasio {getAspectRatioLabel(replaceAspectRatio)}
+                  </li>
                   <li>Dipotong dan disesuaikan untuk tampilan optimal</li>
                   <li>Dikompresi untuk ukuran optimal</li>
                   <li>Deskripsi gambar tetap sama</li>
@@ -612,11 +718,17 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary transition-all duration-300"
-                        style={{ width: isReplacingProcessing ? '50%' : `${replaceProgress}%` }}
+                        style={{
+                          width: isReplacingProcessing
+                            ? "50%"
+                            : `${replaceProgress}%`,
+                        }}
                       />
                     </div>
                     <p className="text-sm text-center text-muted-foreground">
-                      {isReplacingProcessing ? 'Memproses gambar...' : `Mengunggah... ${replaceProgress}%`}
+                      {isReplacingProcessing
+                        ? "Memproses gambar..."
+                        : `Mengunggah... ${replaceProgress}%`}
                     </p>
                   </div>
                 )}
@@ -633,19 +745,30 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
             </Button>
             <Button
               onClick={handleReplacePhoto}
-              disabled={!replaceFile || replaceGalleryImage.isPending || isReplacingProcessing}
+              disabled={
+                !replaceFile ||
+                replaceGalleryImage.isPending ||
+                isReplacingProcessing
+              }
             >
-              {isReplacingProcessing ? 'Memproses...' : replaceGalleryImage.isPending ? 'Mengganti...' : 'Ganti Foto'}
+              {isReplacingProcessing
+                ? "Memproses..."
+                : replaceGalleryImage.isPending
+                  ? "Mengganti..."
+                  : "Ganti Foto"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* Upload Dialog */}
-      <Dialog open={uploadDialogOpen} onOpenChange={(open) => {
-        if (!open) resetUploadDialog();
-        setUploadDialogOpen(open);
-      }}>
+      <Dialog
+        open={uploadDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) resetUploadDialog();
+          setUploadDialogOpen(open);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Unggah Gambar Baru</DialogTitle>
@@ -659,40 +782,60 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
               <Label className="text-sm font-medium">Pilih Rasio Aspek</Label>
               <RadioGroup
                 value={selectedAspectRatio}
-                onValueChange={(value) => setSelectedAspectRatio(value as AspectRatioChoice)}
+                onValueChange={(value) =>
+                  setSelectedAspectRatio(value as AspectRatioChoice)
+                }
                 className="grid grid-cols-3 gap-3"
               >
                 <div>
-                  <RadioGroupItem value="1:1" id="ratio-1-1" className="peer sr-only" />
+                  <RadioGroupItem
+                    value="1:1"
+                    id="ratio-1-1"
+                    className="peer sr-only"
+                  />
                   <Label
                     htmlFor="ratio-1-1"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <div className="w-12 h-12 border-2 border-current rounded mb-2" />
                     <span className="text-xs font-medium">1:1</span>
-                    <span className="text-xs text-muted-foreground">Persegi</span>
+                    <span className="text-xs text-muted-foreground">
+                      Persegi
+                    </span>
                   </Label>
                 </div>
                 <div>
-                  <RadioGroupItem value="4:3" id="ratio-4-3" className="peer sr-only" />
+                  <RadioGroupItem
+                    value="4:3"
+                    id="ratio-4-3"
+                    className="peer sr-only"
+                  />
                   <Label
                     htmlFor="ratio-4-3"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <div className="w-12 h-9 border-2 border-current rounded mb-2" />
                     <span className="text-xs font-medium">4:3</span>
-                    <span className="text-xs text-muted-foreground">Landscape</span>
+                    <span className="text-xs text-muted-foreground">
+                      Landscape
+                    </span>
                   </Label>
                 </div>
                 <div>
-                  <RadioGroupItem value="9:16" id="ratio-9-16" className="peer sr-only" />
+                  <RadioGroupItem
+                    value="9:16"
+                    id="ratio-9-16"
+                    className="peer sr-only"
+                  />
                   <Label
                     htmlFor="ratio-9-16"
                     className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
                   >
                     <div className="w-7 h-12 border-2 border-current rounded mb-2" />
                     <span className="text-xs font-medium">9:16</span>
-                    <span className="text-xs text-muted-foreground">Vertikal</span>
+                    <span className="text-xs text-muted-foreground">
+                      Vertikal
+                    </span>
                   </Label>
                 </div>
               </RadioGroup>
@@ -702,9 +845,13 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
             <div className="flex gap-3 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
               <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div className="text-sm text-blue-900 dark:text-blue-100">
-                <p className="font-medium mb-1">Gambar akan diproses otomatis:</p>
+                <p className="font-medium mb-1">
+                  Gambar akan diproses otomatis:
+                </p>
                 <ul className="list-disc list-inside space-y-0.5 text-xs">
-                  <li>Diubah ke rasio {getAspectRatioLabel(selectedAspectRatio)}</li>
+                  <li>
+                    Diubah ke rasio {getAspectRatioLabel(selectedAspectRatio)}
+                  </li>
                   <li>Dipotong dan disesuaikan untuk tampilan optimal</li>
                   <li>Dikompresi untuk ukuran optimal</li>
                   <li>Kualitas tetap terjaga</li>
@@ -773,11 +920,15 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
                     <div className="h-2 bg-muted rounded-full overflow-hidden">
                       <div
                         className="h-full bg-primary transition-all duration-300"
-                        style={{ width: isProcessing ? '50%' : `${uploadProgress}%` }}
+                        style={{
+                          width: isProcessing ? "50%" : `${uploadProgress}%`,
+                        }}
                       />
                     </div>
                     <p className="text-sm text-center text-muted-foreground">
-                      {isProcessing ? 'Memproses gambar...' : `Mengunggah... ${uploadProgress}%`}
+                      {isProcessing
+                        ? "Memproses gambar..."
+                        : `Mengunggah... ${uploadProgress}%`}
                     </p>
                   </div>
                 )}
@@ -794,9 +945,15 @@ export function GalleryManagementPage({ onClose }: GalleryManagementPageProps) {
             </Button>
             <Button
               onClick={handleUploadImage}
-              disabled={!selectedFile || uploadGalleryImage.isPending || isProcessing}
+              disabled={
+                !selectedFile || uploadGalleryImage.isPending || isProcessing
+              }
             >
-              {isProcessing ? 'Memproses...' : uploadGalleryImage.isPending ? 'Mengunggah...' : 'Unggah'}
+              {isProcessing
+                ? "Memproses..."
+                : uploadGalleryImage.isPending
+                  ? "Mengunggah..."
+                  : "Unggah"}
             </Button>
           </DialogFooter>
         </DialogContent>

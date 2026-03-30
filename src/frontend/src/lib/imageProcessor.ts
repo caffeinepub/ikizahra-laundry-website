@@ -11,8 +11,8 @@ export interface ProcessedImageData {
   height: number;
 }
 
-export type AspectRatioChoice = '1:1' | '4:3' | '9:16' | 'original';
-export type ResolutionChoice = 'original' | 720 | 1080 | 1440;
+export type AspectRatioChoice = "1:1" | "4:3" | "9:16" | "original";
+export type ResolutionChoice = "original" | 720 | 1080 | 1440;
 
 /**
  * Process an image file with selected aspect ratio, resolution and compress
@@ -26,7 +26,7 @@ export async function processImageWithAspectRatio(
   file: File,
   aspectRatio: AspectRatioChoice,
   resolution: ResolutionChoice = 1080,
-  quality: number = 0.85
+  quality = 0.85,
 ): Promise<ProcessedImageData> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -37,7 +37,7 @@ export async function processImageWithAspectRatio(
     };
 
     reader.onerror = () => {
-      reject(new Error('Gagal membaca file gambar'));
+      reject(new Error("Gagal membaca file gambar"));
     };
 
     img.onload = () => {
@@ -46,9 +46,9 @@ export async function processImageWithAspectRatio(
         let targetHeight: number;
 
         // Handle original aspect ratio
-        if (aspectRatio === 'original') {
+        if (aspectRatio === "original") {
           // Determine target width based on resolution
-          if (resolution === 'original') {
+          if (resolution === "original") {
             targetWidth = img.width;
             targetHeight = img.height;
           } else {
@@ -67,7 +67,7 @@ export async function processImageWithAspectRatio(
         } else {
           // Handle fixed aspect ratios
           // Determine target width based on resolution (never upscale)
-          if (resolution === 'original') {
+          if (resolution === "original") {
             targetWidth = Math.min(img.width, 1440); // Default max for original
           } else {
             targetWidth = Math.min(img.width, resolution);
@@ -75,40 +75,40 @@ export async function processImageWithAspectRatio(
 
           // Calculate height based on aspect ratio
           switch (aspectRatio) {
-            case '1:1':
+            case "1:1":
               targetHeight = targetWidth; // Square
               break;
-            case '4:3':
+            case "4:3":
               targetHeight = Math.round((targetWidth * 3) / 4); // Landscape
               break;
-            case '9:16':
+            case "9:16":
               targetHeight = Math.round((targetWidth * 16) / 9); // Portrait/Vertical
               break;
             default:
               targetHeight = targetWidth;
           }
         }
-        
+
         // Create canvas with target dimensions
-        const canvas = document.createElement('canvas');
+        const canvas = document.createElement("canvas");
         canvas.width = targetWidth;
         canvas.height = targetHeight;
-        
-        const ctx = canvas.getContext('2d');
+
+        const ctx = canvas.getContext("2d");
         if (!ctx) {
-          reject(new Error('Gagal membuat canvas context'));
+          reject(new Error("Gagal membuat canvas context"));
           return;
         }
 
         // Enable image smoothing for better quality
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
+        ctx.imageSmoothingQuality = "high";
 
         // Fill background with white (in case of transparency)
-        ctx.fillStyle = '#FFFFFF';
+        ctx.fillStyle = "#FFFFFF";
         ctx.fillRect(0, 0, targetWidth, targetHeight);
 
-        if (aspectRatio === 'original') {
+        if (aspectRatio === "original") {
           // Draw image preserving aspect ratio (no crop)
           ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
         } else {
@@ -118,8 +118,8 @@ export async function processImageWithAspectRatio(
 
           let drawWidth: number;
           let drawHeight: number;
-          let offsetX: number = 0;
-          let offsetY: number = 0;
+          let offsetX = 0;
+          let offsetY = 0;
 
           if (imgAspectRatio > targetAspectRatio) {
             // Image is wider than target - fit to height and crop sides
@@ -141,7 +141,7 @@ export async function processImageWithAspectRatio(
         canvas.toBlob(
           (blob) => {
             if (!blob) {
-              reject(new Error('Gagal mengkonversi gambar'));
+              reject(new Error("Gagal mengkonversi gambar"));
               return;
             }
 
@@ -149,23 +149,26 @@ export async function processImageWithAspectRatio(
             const reader = new FileReader();
             reader.onload = () => {
               const arrayBuffer = reader.result as ArrayBuffer;
-              const uint8Array = new Uint8Array(arrayBuffer) as Uint8Array<ArrayBuffer>;
+              const uint8Array = new Uint8Array(
+                arrayBuffer,
+              ) as Uint8Array<ArrayBuffer>;
 
               resolve({
                 blob: uint8Array,
-                aspectRatio: aspectRatio === 'original' ? 'original' : aspectRatio,
+                aspectRatio:
+                  aspectRatio === "original" ? "original" : aspectRatio,
                 fileSizeBytes: uint8Array.length,
                 width: targetWidth,
                 height: targetHeight,
               });
             };
             reader.onerror = () => {
-              reject(new Error('Gagal membaca blob'));
+              reject(new Error("Gagal membaca blob"));
             };
             reader.readAsArrayBuffer(blob);
           },
-          'image/jpeg',
-          quality
+          "image/jpeg",
+          quality,
         );
       } catch (error) {
         reject(error);
@@ -173,7 +176,7 @@ export async function processImageWithAspectRatio(
     };
 
     img.onerror = () => {
-      reject(new Error('Gagal memuat gambar'));
+      reject(new Error("Gagal memuat gambar"));
     };
 
     reader.readAsDataURL(file);
@@ -190,12 +193,13 @@ export async function processImageWithAspectRatio(
  */
 export async function processImageToVertical(
   file: File,
-  targetWidth: number = 1080,
-  quality: number = 0.85
+  targetWidth = 1080,
+  quality = 0.85,
 ): Promise<ProcessedImageData> {
   // Convert targetWidth to ResolutionChoice
-  const resolution: ResolutionChoice = targetWidth === 720 ? 720 : targetWidth === 1440 ? 1440 : 1080;
-  return processImageWithAspectRatio(file, '9:16', resolution, quality);
+  const resolution: ResolutionChoice =
+    targetWidth === 720 ? 720 : targetWidth === 1440 ? 1440 : 1080;
+  return processImageWithAspectRatio(file, "9:16", resolution, quality);
 }
 
 /**
@@ -208,27 +212,37 @@ export async function processImageToVertical(
  */
 export async function processImagePreserveAspect(
   file: File,
-  maxWidth: number = 1920,
-  quality: number = 0.85
+  maxWidth = 1920,
+  quality = 0.85,
 ): Promise<ProcessedImageData> {
   // For preserve aspect, use 'original' resolution or closest match
-  const resolution: ResolutionChoice = maxWidth <= 720 ? 720 : maxWidth <= 1080 ? 1080 : maxWidth <= 1440 ? 1440 : 'original';
-  return processImageWithAspectRatio(file, 'original', resolution, quality);
+  const resolution: ResolutionChoice =
+    maxWidth <= 720
+      ? 720
+      : maxWidth <= 1080
+        ? 1080
+        : maxWidth <= 1440
+          ? 1440
+          : "original";
+  return processImageWithAspectRatio(file, "original", resolution, quality);
 }
 
 /**
  * Validate image file type and size
  */
-export function validateImageFile(file: File, maxSizeMB: number = 10): { valid: boolean; error?: string } {
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-  
+export function validateImageFile(
+  file: File,
+  maxSizeMB = 10,
+): { valid: boolean; error?: string } {
+  const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
   if (!validTypes.includes(file.type)) {
     return {
       valid: false,
-      error: 'Tipe file tidak valid. Gunakan JPEG, PNG, atau WebP.',
+      error: "Tipe file tidak valid. Gunakan JPEG, PNG, atau WebP.",
     };
   }
-  
+
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   if (file.size > maxSizeBytes) {
     return {
@@ -236,7 +250,7 @@ export function validateImageFile(file: File, maxSizeMB: number = 10): { valid: 
       error: `Ukuran file terlalu besar. Maksimal ${maxSizeMB}MB.`,
     };
   }
-  
+
   return { valid: true };
 }
 
@@ -244,14 +258,14 @@ export function validateImageFile(file: File, maxSizeMB: number = 10): { valid: 
  * Validate image file type
  */
 export function isValidImageType(file: File): boolean {
-  const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  const validTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
   return validTypes.includes(file.type);
 }
 
 /**
  * Validate image file size
  */
-export function isValidImageSize(file: File, maxSizeMB: number = 10): boolean {
+export function isValidImageSize(file: File, maxSizeMB = 10): boolean {
   const maxSizeBytes = maxSizeMB * 1024 * 1024;
   return file.size <= maxSizeBytes;
 }
@@ -260,7 +274,7 @@ export function isValidImageSize(file: File, maxSizeMB: number = 10): boolean {
  * Format file size for display
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
-  return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(2)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }

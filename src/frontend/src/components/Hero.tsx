@@ -9,35 +9,75 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Edit2, Pencil, QrCode } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImageType } from "../backend";
 import { useInternetIdentity } from "../hooks/useInternetIdentity";
-import { useGetImagesByType, useIsCallerAdmin } from "../hooks/useQueries";
+import {
+  useGetImagesByType,
+  useGetQrCodeCaption,
+  useIsCallerAdmin,
+  useSetQrCodeCaption,
+} from "../hooks/useQueries";
 import { HeroBannerEditor } from "./HeroBannerEditor";
-
-const QR_DESCRIPTION_KEY = "iki_zahra_qr_description";
-const QR_TITLE_KEY = "iki_zahra_qr_title";
 
 const DEFAULT_TITLE = "Scan QR Code";
 const DEFAULT_DESCRIPTION = "Scan untuk langsung membuka website kami";
+const CAPTION_SEP = "|||";
+
+function parseCaption(raw: string): { title: string; description: string } {
+  if (!raw) return { title: DEFAULT_TITLE, description: DEFAULT_DESCRIPTION };
+  const idx = raw.indexOf(CAPTION_SEP);
+  if (idx === -1) return { title: raw, description: DEFAULT_DESCRIPTION };
+  return {
+    title: raw.slice(0, idx),
+    description: raw.slice(idx + CAPTION_SEP.length),
+  };
+}
+
+function formatCaption(title: string, description: string): string {
+  return `${title}${CAPTION_SEP}${description}`;
+}
 
 export function Hero() {
   const { identity } = useInternetIdentity();
   const { data: isAdmin } = useIsCallerAdmin();
   const { data: heroImages } = useGetImagesByType(ImageType.hero);
+  const { data: qrCaptionRaw } = useGetQrCodeCaption();
+  const setQrCaptionMutation = useSetQrCodeCaption();
+
   const [showEditor, setShowEditor] = useState(false);
   const [showQrEditor, setShowQrEditor] = useState(false);
-  const [qrTitle, setQrTitle] = useState(DEFAULT_TITLE);
-  const [qrDescription, setQrDescription] = useState(DEFAULT_DESCRIPTION);
   const [editTitle, setEditTitle] = useState(DEFAULT_TITLE);
   const [editDescription, setEditDescription] = useState(DEFAULT_DESCRIPTION);
 
+  // Track banner container width to size the QR code
+  const bannerContainerRef = useRef<HTMLDivElement>(null);
+  const [bannerWidth, setBannerWidth] = useState(320);
+
   useEffect(() => {
-    const savedTitle = localStorage.getItem(QR_TITLE_KEY);
-    const savedDesc = localStorage.getItem(QR_DESCRIPTION_KEY);
-    if (savedTitle) setQrTitle(savedTitle);
-    if (savedDesc) setQrDescription(savedDesc);
+    const el = bannerContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setBannerWidth(Math.floor(entry.contentRect.width));
+      }
+    });
+    observer.observe(el);
+    setBannerWidth(Math.floor(el.getBoundingClientRect().width));
+    return () => observer.disconnect();
   }, []);
+
+  const { title: qrTitle, description: qrDescription } = parseCaption(
+    qrCaptionRaw || "",
+  );
+
+  useEffect(() => {
+    if (qrCaptionRaw) {
+      const parsed = parseCaption(qrCaptionRaw);
+      setEditTitle(parsed.title);
+      setEditDescription(parsed.description);
+    }
+  }, [qrCaptionRaw]);
 
   const openQrEditor = () => {
     setEditTitle(qrTitle);
@@ -46,11 +86,10 @@ export function Hero() {
   };
 
   const saveQrText = () => {
-    setQrTitle(editTitle);
-    setQrDescription(editDescription);
-    localStorage.setItem(QR_TITLE_KEY, editTitle);
-    localStorage.setItem(QR_DESCRIPTION_KEY, editDescription);
-    setShowQrEditor(false);
+    const caption = formatCaption(editTitle, editDescription);
+    setQrCaptionMutation.mutate(caption, {
+      onSuccess: () => setShowQrEditor(false),
+    });
   };
 
   const scrollToSection = (id: string) => {
@@ -110,7 +149,10 @@ export function Hero() {
 
               {/* Right Image */}
               <div className="flex justify-center lg:justify-end relative">
-                <div className="relative w-full max-w-2xl">
+                <div
+                  ref={bannerContainerRef}
+                  className="relative w-full max-w-2xl"
+                >
                   <div className="absolute -inset-4 bg-gradient-to-r from-sky-400/20 to-cyan-400/20 rounded-3xl blur-2xl" />
                   {heroImage?.image ? (
                     <img
@@ -142,22 +184,28 @@ export function Hero() {
               </div>
             </div>
 
-            {/* QR Code Section */}
-            <div className="flex justify-center lg:justify-end mt-6">
-              <div className="relative flex items-center gap-5 bg-white/80 backdrop-blur-sm rounded-2xl px-6 py-5 shadow-lg ring-1 ring-sky-200 max-w-sm">
-                <div className="flex-shrink-0 p-2 bg-white rounded-xl shadow-sm ring-1 ring-sky-100">
+            {/* QR Code Section — full width matching banner */}
+            <div className="flex justify-center lg:justify-end mt-4">
+              <div
+                className="relative w-full max-w-2xl bg-white/85 backdrop-blur-sm rounded-2xl p-5 shadow-lg ring-1 ring-gray-300"
+                style={{ width: bannerWidth > 0 ? bannerWidth : undefined }}
+              >
+                {/* QR code fills full container width */}
+                <div className="w-full flex justify-center mb-4">
                   <QRCodeSVG
                     value={websiteUrl}
-                    size={100}
+                    size={bannerWidth > 0 ? bannerWidth : 320}
                     bgColor="#ffffff"
-                    fgColor="#0369a1"
+                    fgColor="#000000"
                     level="H"
                     includeMargin={false}
+                    style={{ width: "100%", height: "auto", display: "block" }}
                   />
                 </div>
-                <div className="space-y-1 flex-1">
+                {/* Caption / description */}
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <QrCode className="h-4 w-4 text-sky-600" />
+                    <QrCode className="h-4 w-4 text-sky-600 flex-shrink-0" />
                     <p className="text-sm font-bold text-sky-800">{qrTitle}</p>
                   </div>
                   <p className="text-xs text-sky-700 leading-snug whitespace-pre-wrap">
@@ -205,24 +253,24 @@ export function Hero() {
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <p className="text-sm font-medium text-gray-700">Judul</p>
+              <p className="text-sm font-medium text-foreground">Judul</p>
               <input
                 id="qr-title-input"
                 data-ocid="qr_editor.input"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400"
+                className="w-full border border-input rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
                 placeholder="Judul QR code..."
               />
             </div>
             <div className="space-y-1.5">
-              <p className="text-sm font-medium text-gray-700">
+              <p className="text-sm font-medium text-foreground">
                 Keterangan / Kriteria
               </p>
               <Textarea
                 id="qr-desc-textarea"
                 data-ocid="qr_editor.textarea"
-                className="w-full min-h-[120px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-sky-400 resize-none"
+                className="w-full min-h-[120px] resize-none"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="Tulis keterangan atau kriteria QR code di sini... (tidak terbatas)"
@@ -240,9 +288,10 @@ export function Hero() {
             <Button
               data-ocid="qr_editor.save_button"
               onClick={saveQrText}
+              disabled={setQrCaptionMutation.isPending}
               className="bg-sky-600 hover:bg-sky-700 text-white"
             >
-              Simpan
+              {setQrCaptionMutation.isPending ? "Menyimpan..." : "Simpan"}
             </Button>
           </DialogFooter>
         </DialogContent>

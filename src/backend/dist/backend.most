@@ -1,0 +1,174 @@
+// Version: 1.0.0
+type AspectRatioOption__861499397 =
+  {#landscape; #original; #portrait; #square};
+type BannerInfo__765197463 =
+  {image : ?ExternalBlob__246066408; message : Text; name : Text};
+type ColorHarmony__386420084 =
+  {accent : Text; primary : Text; secondary : Text};
+type ContactFormEntry__818002141 =
+  {
+    id : Nat;
+    message : Text;
+    name : Text;
+    phone : Text;
+    timestamp : Time__900049286
+  };
+type Data__791452850<K, V> =
+  {var count : Nat__490723111; kvs : [var ?(K, V)]};
+type ExtendedThemeConfig__795998509 =
+  {
+    colorHarmony : ?ColorHarmony__386420084;
+    gradient : ?GradientConfig__439270463;
+    harmonyLevel : Nat;
+    headerStyle : ?HeaderStyleConfig__833669734;
+    luxuryPreset : Bool;
+    theme : ?ThemeConfig__748643467
+  };
+type ExternalBlob__246066408 = Blob;
+type GradientConfig__439270463 =
+  {direction : Text; endColor : Text; intensity : Nat; startColor : Text};
+type HeaderStyleConfig__833669734 =
+  {
+    colorHarmony : ?ColorHarmony__386420084;
+    gradient : ?GradientConfig__439270463;
+    isResponsive : Bool;
+    layout : ?LayoutConfig__516948727;
+    responsive : ?ResponsiveConfig__177989582;
+    shadow : ?ShadowConfig__586312959;
+    texture : ?TextureConfig__886056026;
+    typography : ?TypographyConfig__498981352
+  };
+type ImageType__755152945 =
+  {#contactBackground; #gallery; #hero; #logo; #photoBackground; #service};
+type Int__270357528 = Int__616954475;
+type Int__616954475 = Int;
+type Internal__8484328<K, V> =
+  {children : [var ?Node__46230540<K, V>]; data : Data__791452850<K, V>};
+type LayoutConfig__516948727 =
+  {alignment : Text; borderRadius : Nat; margin : Nat; padding : Nat};
+type Leaf__809889148<K, V> = {data : Data__791452850<K, V>};
+type Map__158565046<K, V> = Map__297112838<K, V>;
+type Map__297112838<K, V> =
+  {var root : Node__46230540<K, V>; var size : Nat__490723111};
+type Map__605269027<K, V> = Map__158565046<K, V>;
+type Nat__490723111 = Nat__920180692;
+type Nat__920180692 = Nat;
+type Node__46230540<K, V> =
+  {#internal : Internal__8484328<K, V>; #leaf : Leaf__809889148<K, V>};
+type PatternType__809868330 = {#bubbles; #fabricTexture; #waterRipples};
+type ProcessedImage__979975236 =
+  {
+    aspectRatio : AspectRatioOption__861499397;
+    description : Text;
+    fileSizeBytes : Nat;
+    id : Nat;
+    image : ?ExternalBlob__246066408;
+    imageType : ImageType__755152945;
+    optimizedUrl : ?Text;
+    originalHeight : ?Nat;
+    originalWidth : ?Nat;
+    sortOrder : Nat;
+    uploadTime : Time__900049286
+  };
+type ResponsiveConfig__177989582 =
+  {
+    desktopFontSize : Nat;
+    desktopPadding : Nat;
+    mobileFontSize : Nat;
+    mobilePadding : Nat;
+    tabletFontSize : Nat;
+    tabletPadding : Nat
+  };
+type ServiceCategory__37760325 = {#inStore; #online};
+type Service__311281967 =
+  {
+    category : ServiceCategory__37760325;
+    description : Text;
+    id : Nat;
+    image : ?ProcessedImage__979975236;
+    isActive : Bool;
+    name : Text;
+    price : Nat
+  };
+type ShadowConfig__586312959 =
+  {blurRadius : Nat; color : Text; offsetX : Int; offsetY : Int};
+type StoreServiceCategory__101106934 = {#operatorService; #selfService};
+type StoreSubcategoryService__4374442 =
+  {
+    description : Text;
+    id : Nat;
+    image : ?ProcessedImage__979975236;
+    isActive : Bool;
+    name : Text;
+    price : Nat;
+    subcategory : StoreServiceCategory__101106934
+  };
+type TextureConfig__886056026 =
+  {colorOverlay : Text; intensity : Nat; patternType : Text; scale : Nat};
+type ThemeConfig__748643467 =
+  {
+    colorHarmony : ColorHarmony__386420084;
+    gradients : [GradientConfig__439270463];
+    harmonyLevel : Nat;
+    luxuryPreset : Bool
+  };
+type Time__796480547 = Int__270357528;
+type Time__900049286 = Time__796480547;
+type TypographyConfig__498981352 =
+  {fontFamily : Text; fontSize : Nat; fontWeight : Text; letterSpacing : Nat};
+type UserProfile__491224006 = {name : Text; phoneNumber : Text};
+type UserRole__1054455867 = {#admin; #guest; #user};
+actor {
+  stable accessControlState :
+    {
+      var adminAssigned : Bool;
+      userRoles : Map__605269027<Principal, UserRole__1054455867>
+    };
+  stable var backgroundTheme :
+    {
+      baseColor : Text;
+      pattern : PatternType__809868330;
+      patternIntensity : Nat;
+      transparencyLevel : Nat
+    };
+  stable var banner : ?BannerInfo__765197463;
+  stable contactEntries :
+    {
+      var root : Node__46230540<Nat, ContactFormEntry__818002141>;
+      var size : Nat__490723111
+    };
+  stable var contactInfo :
+    {address : Text; hours : Text; phone : Text; whatsapp : Text};
+  stable customerPhotos :
+    {
+      var root : Node__46230540<Nat, ExternalBlob__246066408>;
+      var size : Nat__490723111
+    };
+  stable var extendedThemeConfig : ?ExtendedThemeConfig__795998509;
+  stable var headerStyleConfig : ?HeaderStyleConfig__833669734;
+  stable imageDescriptions :
+    {
+      var root : Node__46230540<Nat, ProcessedImage__979975236>;
+      var size : Nat__490723111
+    };
+  stable inStoreSubcategoryServices :
+    {
+      var root : Node__46230540<Nat, StoreSubcategoryService__4374442>;
+      var size : Nat__490723111
+    };
+  stable var nextCustomerPhotoId : Nat;
+  stable var nextGalleryImageId : Nat;
+  stable var photoBackgroundImage : ?ExternalBlob__246066408;
+  stable var qrCodeCaption : Text;
+  stable services :
+    {
+      var root : Node__46230540<Nat, Service__311281967>;
+      var size : Nat__490723111
+    };
+  stable var themeConfig : ?ThemeConfig__748643467;
+  stable userProfiles :
+    {
+      var root : Node__46230540<Principal, UserProfile__491224006>;
+      var size : Nat__490723111
+    }
+};

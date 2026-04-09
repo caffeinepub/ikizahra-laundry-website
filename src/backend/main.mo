@@ -1,38 +1,21 @@
 import Map "mo:core/Map";
 import Runtime "mo:core/Runtime";
-import Nat "mo:core/Nat";
 import Array "mo:core/Array";
 import Time "mo:core/Time";
-import Storage "blob-storage/Storage";
-import Iter "mo:core/Iter";
-import MixinStorage "blob-storage/Mixin";
-
-import AccessControl "authorization/access-control";
+import Storage "mo:caffeineai-object-storage/Storage";
+import MixinObjectStorage "mo:caffeineai-object-storage/Mixin";
+import AccessControl "mo:caffeineai-authorization/access-control";
+import MixinAuthorization "mo:caffeineai-authorization/MixinAuthorization";
 import Principal "mo:core/Principal";
 
 
+
 actor {
-  include MixinStorage();
+  include MixinObjectStorage();
 
   // Authentication state
   let accessControlState = AccessControl.initState();
-
-  // Authentication and authorization endpoints
-  public shared ({ caller }) func initializeAccessControl() : async () {
-    AccessControl.initialize(accessControlState, caller);
-  };
-
-  public query ({ caller }) func getCallerUserRole() : async AccessControl.UserRole {
-    AccessControl.getUserRole(accessControlState, caller);
-  };
-
-  public shared ({ caller }) func assignCallerUserRole(user : Principal, role : AccessControl.UserRole) : async () {
-    AccessControl.assignRole(accessControlState, caller, user, role);
-  };
-
-  public query ({ caller }) func isCallerAdmin() : async Bool {
-    AccessControl.isAdmin(accessControlState, caller);
-  };
+  include MixinAuthorization(accessControlState);
 
   public type UserProfile = {
     name : Text;
@@ -43,7 +26,7 @@ actor {
 
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
     if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
-      Runtime.trap("Unauthorized: Only users can save profiles");
+      Runtime.trap("Unauthorized: Only users can view profiles");
     };
     userProfiles.get(caller);
   };
@@ -230,12 +213,9 @@ actor {
     gradient : ?GradientConfig;
     colorHarmony : ?ColorHarmony;
     luxuryPreset : Bool;
-    harmonyLevel : Nat; // Percentage 0-100
+    harmonyLevel : Nat;
   };
 
-  var nextServiceId = 1;
-  var nextImageDescriptionId = 1;
-  var nextContactFormId = 1;
   var nextGalleryImageId = 1;
 
   var contactInfo : ContactInfo = {
@@ -363,12 +343,25 @@ actor {
     harmonyLevel = 98;
   };
 
-  /// PUBLIC API FOR CUSTOMER PHOTOS
-  /// No authorization check - accessible to all users including anonymous/guests
+  // QR code caption persisted in backend state
+  var qrCodeCaption : Text = "Scan untuk membuka website Iki Zahra Laundry";
+
+  public query ({ caller }) func getQrCodeCaption() : async Text {
+    qrCodeCaption;
+  };
+
+  public shared ({ caller }) func setQrCodeCaption(caption : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can update QR code caption");
+    };
+    qrCodeCaption := caption;
+  };
+
+  // Customer photos
   let customerPhotos = Map.empty<Nat, Storage.ExternalBlob>();
   var nextCustomerPhotoId = 1;
 
-  /// Customizable photo background image (admin-only)
+  // Photo background image (admin-only)
   var photoBackgroundImage : ?Storage.ExternalBlob = null;
 
   public shared ({ caller }) func uploadPhotoBackgroundImage(blob : Storage.ExternalBlob) : async () {
@@ -509,16 +502,7 @@ actor {
     switch (services.get(id)) {
       case (null) { Runtime.trap("Layanan tidak ditemukan") };
       case (?service) {
-        let updatedService = {
-          id = service.id;
-          name;
-          description;
-          price;
-          image = service.image;
-          category = service.category;
-          isActive = service.isActive;
-        };
-        services.add(id, updatedService);
+        services.add(id, { service with name; description; price });
       };
     };
   };
@@ -531,16 +515,7 @@ actor {
     switch (inStoreSubcategoryServices.get(id)) {
       case (null) { Runtime.trap("Layanan tidak ditemukan") };
       case (?service) {
-        let updatedService = {
-          id = service.id;
-          name;
-          description;
-          price;
-          image = service.image;
-          subcategory = service.subcategory;
-          isActive = service.isActive;
-        };
-        inStoreSubcategoryServices.add(id, updatedService);
+        inStoreSubcategoryServices.add(id, { service with name; description; price });
       };
     };
   };
@@ -553,16 +528,7 @@ actor {
     switch (services.get(id)) {
       case (null) { Runtime.trap("Layanan tidak ditemukan") };
       case (?service) {
-        let updatedService = {
-          id = service.id;
-          name;
-          description;
-          price;
-          image = null;
-          category = service.category;
-          isActive = service.isActive;
-        };
-        services.add(id, updatedService);
+        services.add(id, { service with name; description; price; image = null });
       };
     };
   };
@@ -575,16 +541,7 @@ actor {
     switch (inStoreSubcategoryServices.get(id)) {
       case (null) { Runtime.trap("Layanan tidak ditemukan") };
       case (?service) {
-        let updatedService = {
-          id = service.id;
-          name;
-          description;
-          price;
-          image = null;
-          subcategory = service.subcategory;
-          isActive = service.isActive;
-        };
-        inStoreSubcategoryServices.add(id, updatedService);
+        inStoreSubcategoryServices.add(id, { service with name; description; price; image = null });
       };
     };
   };
@@ -637,6 +594,42 @@ actor {
     inStoreSubcategoryServices.values().toArray().filter(func(s) { s.subcategory == subcategory });
   };
 
+  // Upload service image (canonical name matching contracts)
+  public shared ({ caller }) func uploadServiceImage(
+    id : Nat,
+    image : ?Storage.ExternalBlob,
+    aspectRatio : AspectRatioOption,
+    fileSizeBytes : Nat,
+    optimizedUrl : ?Text,
+    width : ?Nat,
+    height : ?Nat,
+  ) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can upload images");
+    };
+
+    switch (services.get(id)) {
+      case (null) { Runtime.trap("Layanan tidak ditemukan") };
+      case (?service) {
+        let processedImg : ProcessedImage = {
+          id;
+          image;
+          description = service.name # " - " # service.description;
+          uploadTime = Time.now();
+          sortOrder = 0;
+          aspectRatio;
+          fileSizeBytes;
+          optimizedUrl;
+          imageType = #service;
+          originalWidth = width;
+          originalHeight = height;
+        };
+        services.add(id, { service with image = ?processedImg });
+      };
+    };
+  };
+
+  // Legacy alias
   public shared ({ caller }) func uploadProcessedServiceImage(
     id : Nat,
     image : ?Storage.ExternalBlob,
@@ -653,7 +646,7 @@ actor {
     switch (services.get(id)) {
       case (null) { Runtime.trap("Layanan tidak ditemukan") };
       case (?service) {
-        let processedImg = {
+        let processedImg : ProcessedImage = {
           id;
           image;
           description = service.name # " - " # service.description;
@@ -666,21 +659,47 @@ actor {
           originalWidth = width;
           originalHeight = height;
         };
-
-        let updatedService = {
-          id = service.id;
-          name = service.name;
-          description = service.description;
-          price = service.price;
-          image = ?processedImg;
-          category = service.category;
-          isActive = service.isActive;
-        };
-        services.add(id, updatedService);
+        services.add(id, { service with image = ?processedImg });
       };
     };
   };
 
+  // Upload store subcategory service image (canonical name matching contracts)
+  public shared ({ caller }) func uploadStoreSubcategoryServiceImage(
+    id : Nat,
+    image : ?Storage.ExternalBlob,
+    aspectRatio : AspectRatioOption,
+    fileSizeBytes : Nat,
+    optimizedUrl : ?Text,
+    width : ?Nat,
+    height : ?Nat,
+  ) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can upload images");
+    };
+
+    switch (inStoreSubcategoryServices.get(id)) {
+      case (null) { Runtime.trap("Layanan tidak ditemukan") };
+      case (?service) {
+        let processedImg : ProcessedImage = {
+          id;
+          image;
+          description = service.name # " - " # service.description;
+          uploadTime = Time.now();
+          sortOrder = 0;
+          aspectRatio;
+          fileSizeBytes;
+          optimizedUrl;
+          imageType = #service;
+          originalWidth = width;
+          originalHeight = height;
+        };
+        inStoreSubcategoryServices.add(id, { service with image = ?processedImg });
+      };
+    };
+  };
+
+  // Legacy alias
   public shared ({ caller }) func uploadProcessedStoreSubcategoryServiceImage(
     id : Nat,
     image : ?Storage.ExternalBlob,
@@ -697,7 +716,7 @@ actor {
     switch (inStoreSubcategoryServices.get(id)) {
       case (null) { Runtime.trap("Layanan tidak ditemukan") };
       case (?service) {
-        let processedImg = {
+        let processedImg : ProcessedImage = {
           id;
           image;
           description = service.name # " - " # service.description;
@@ -710,17 +729,7 @@ actor {
           originalWidth = width;
           originalHeight = height;
         };
-
-        let updatedService = {
-          id = service.id;
-          name = service.name;
-          description = service.description;
-          price = service.price;
-          image = ?processedImg;
-          subcategory = service.subcategory;
-          isActive = service.isActive;
-        };
-        inStoreSubcategoryServices.add(id, updatedService);
+        inStoreSubcategoryServices.add(id, { service with image = ?processedImg });
       };
     };
   };
@@ -732,6 +741,41 @@ actor {
     imageDescriptions.values().toArray();
   };
 
+  // Upload gallery image (canonical name matching contracts)
+  public shared ({ caller }) func uploadGalleryImage(
+    image : ?Storage.ExternalBlob,
+    desc : Text,
+    aspectRatio : AspectRatioOption,
+    fileSizeBytes : Nat,
+    optimizedUrl : ?Text,
+    width : ?Nat,
+    height : ?Nat,
+  ) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admin can upload images");
+    };
+
+    let newId = nextGalleryImageId;
+    let processedImg : ProcessedImage = {
+      id = newId;
+      image;
+      description = desc;
+      uploadTime = Time.now();
+      sortOrder = newId;
+      aspectRatio;
+      fileSizeBytes;
+      optimizedUrl;
+      imageType = #gallery;
+      originalWidth = width;
+      originalHeight = height;
+    };
+
+    imageDescriptions.add(newId, processedImg);
+    nextGalleryImageId += 1;
+    newId;
+  };
+
+  // Legacy alias
   public shared ({ caller }) func uploadProcessedGalleryImage(
     image : ?Storage.ExternalBlob,
     desc : Text,
@@ -765,7 +809,6 @@ actor {
     newId;
   };
 
-  // New function to delete gallery image
   public shared ({ caller }) func deleteGalleryImage(imageId : Nat) : async () {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admin can delete gallery images");
@@ -774,14 +817,11 @@ actor {
     switch (imageDescriptions.get(imageId)) {
       case (null) { Runtime.trap("Image not found") };
       case (?_) {
-        // Remove the image metadata from the map
         imageDescriptions.remove(imageId);
-        ();
       };
     };
   };
 
-  // New function to replace gallery image
   public shared ({ caller }) func replaceGalleryImage(
     imageId : Nat,
     newImage : ?Storage.ExternalBlob,
@@ -804,25 +844,22 @@ actor {
           case (?d) { d };
         };
 
-        let updatedImage : ProcessedImage = {
-          id = imageId;
+        imageDescriptions.add(imageId, {
+          existingImage with
           image = newImage;
           description = updatedDesc;
           uploadTime = Time.now();
-          sortOrder = existingImage.sortOrder;
           aspectRatio;
           fileSizeBytes;
           optimizedUrl;
-          imageType = #gallery;
           originalWidth = width;
           originalHeight = height;
-        };
-
-        imageDescriptions.add(imageId, updatedImage);
+        });
       };
     };
   };
 
+  // Upload hero image (canonical name matching contracts)
   public shared ({ caller }) func uploadHeroImage(
     image : ?Storage.ExternalBlob,
     desc : Text,
@@ -837,7 +874,7 @@ actor {
     };
 
     let nextId = imageDescriptions.size() + 1;
-    let processedImg : ProcessedImage = {
+    imageDescriptions.add(nextId, {
       id = nextId;
       image;
       description = desc;
@@ -849,12 +886,11 @@ actor {
       imageType = #hero;
       originalWidth = width;
       originalHeight = height;
-    };
-
-    imageDescriptions.add(nextId, processedImg);
+    });
     nextId;
   };
 
+  // Upload logo image (canonical name matching contracts)
   public shared ({ caller }) func uploadLogoImage(
     image : ?Storage.ExternalBlob,
     desc : Text,
@@ -869,7 +905,7 @@ actor {
     };
 
     let nextId = imageDescriptions.size() + 1;
-    let processedImg : ProcessedImage = {
+    imageDescriptions.add(nextId, {
       id = nextId;
       image;
       description = desc;
@@ -881,9 +917,7 @@ actor {
       imageType = #logo;
       originalWidth = width;
       originalHeight = height;
-    };
-
-    imageDescriptions.add(nextId, processedImg);
+    });
     nextId;
   };
 
@@ -895,20 +929,7 @@ actor {
     switch (imageDescriptions.get(id)) {
       case (null) { Runtime.trap("Gambar tidak ditemukan") };
       case (?imgDesc) {
-        let updatedDesc = {
-          id = imgDesc.id;
-          image = imgDesc.image;
-          description = newDesc;
-          uploadTime = imgDesc.uploadTime;
-          sortOrder = imgDesc.sortOrder;
-          aspectRatio = imgDesc.aspectRatio;
-          fileSizeBytes = imgDesc.fileSizeBytes;
-          optimizedUrl = imgDesc.optimizedUrl;
-          imageType = imgDesc.imageType;
-          originalWidth = imgDesc.originalWidth;
-          originalHeight = imgDesc.originalHeight;
-        };
-        imageDescriptions.add(id, updatedDesc);
+        imageDescriptions.add(id, { imgDesc with description = newDesc });
       };
     };
   };
@@ -927,7 +948,7 @@ actor {
     };
 
     let nextId = imageDescriptions.size() + 1;
-    let processedImg : ProcessedImage = {
+    imageDescriptions.add(nextId, {
       id = nextId;
       image;
       description = desc;
@@ -939,9 +960,7 @@ actor {
       imageType = #contactBackground;
       originalWidth = width;
       originalHeight = height;
-    };
-
-    imageDescriptions.add(nextId, processedImg);
+    });
     nextId;
   };
 
@@ -954,25 +973,20 @@ actor {
       Runtime.trap("Unauthorized: Only admin can update contact info");
     };
 
-    contactInfo := {
-      phone;
-      whatsapp;
-      address;
-      hours;
-    };
+    contactInfo := { phone; whatsapp; address; hours };
   };
 
   public shared ({ caller }) func submitContactForm(name : Text, phone : Text, message : Text) : async Nat {
+    let nextId = contactEntries.size() + 1;
     let entry : ContactFormEntry = {
-      id = contactEntries.size() + 1;
+      id = nextId;
       name;
       phone;
       message;
       timestamp = Time.now();
     };
-
-    contactEntries.add(contactEntries.size() + 1, entry);
-    contactEntries.size() + 1;
+    contactEntries.add(nextId, entry);
+    nextId;
   };
 
   public query ({ caller }) func getContactFormEntry(id : Nat) : async ?ContactFormEntry {
@@ -998,17 +1012,11 @@ actor {
   };
 
   public query ({ caller }) func getOrderedGalleryImages() : async [ProcessedImage] {
-    let imagesArray = imageDescriptions.values().toArray();
-    imagesArray;
+    imageDescriptions.values().toArray();
   };
 
   public query ({ caller }) func getImagesByType(imageType : ImageType) : async [ProcessedImage] {
-    let imagesArray = imageDescriptions.values().toArray();
-    imagesArray.filter(
-      func(img) {
-        img.imageType == imageType;
-      }
-    );
+    imageDescriptions.values().toArray().filter(func(img) { img.imageType == imageType });
   };
 
   public shared ({ caller }) func setDemoState() : async () {
@@ -1112,7 +1120,7 @@ actor {
 
     let defaultHeroImageIds = [1, 2, 3, 4];
     for (id in defaultHeroImageIds.values()) {
-      let defaultHeroImage : ProcessedImage = {
+      imageDescriptions.add(id, {
         id;
         image = null;
         description = "Banner Mesin Cuci";
@@ -1124,25 +1132,8 @@ actor {
         imageType = #hero;
         originalWidth = null;
         originalHeight = null;
-      };
-      imageDescriptions.add(id, defaultHeroImage);
+      });
     };
-
-    // Set demo contact background image
-    let demoContactBackgroundImage : ProcessedImage = {
-      id = 1;
-      image = null;
-      description = "Kirim Pesan - Banner Demo Kontak";
-      uploadTime = Time.now();
-      sortOrder = 0;
-      aspectRatio = #landscape;
-      fileSizeBytes = 0;
-      optimizedUrl = null;
-      imageType = #contactBackground;
-      originalWidth = null;
-      originalHeight = null;
-    };
-    imageDescriptions.add(1, demoContactBackgroundImage);
   };
 
   public query ({ caller }) func isDemoStateSet() : async Bool {
@@ -1157,12 +1148,7 @@ actor {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admin can upload banners");
     };
-
-    banner := ?{
-      name;
-      message;
-      image;
-    };
+    banner := ?{ name; message; image };
   };
 
   public query ({ caller }) func getBanner() : async ?BannerInfo {
@@ -1175,19 +1161,12 @@ actor {
 
   public query ({ caller }) func getInStoreSubcategoriesCount() : async (Nat, Nat) {
     let servicesArray = inStoreSubcategoryServices.values().toArray();
-
-    let selfServiceCount = servicesArray.filter(
-      func(s) { s.subcategory == #selfService }
-    ).size();
-
-    let operatorServiceCount = servicesArray.filter(
-      func(s) { s.subcategory == #operatorService }
-    ).size();
-
+    let selfServiceCount = servicesArray.filter(func(s) { s.subcategory == #selfService }).size();
+    let operatorServiceCount = servicesArray.filter(func(s) { s.subcategory == #operatorService }).size();
     (selfServiceCount, operatorServiceCount);
   };
 
-  /// PUBLIC API FOR CUSTOMER PHOTOS (Shared with #anon)
+  // Customer photo upload - accessible to all users including anonymous
   public shared ({ caller }) func uploadCustomerPhoto(photo : Storage.ExternalBlob) : async Nat {
     let currentId = nextCustomerPhotoId;
     customerPhotos.add(currentId, photo);
@@ -1195,7 +1174,7 @@ actor {
     currentId;
   };
 
-  /// Admin-only access to view customer photos for privacy protection
+  // Get a single customer photo (admin-only)
   public query ({ caller }) func getCustomerPhoto(id : Nat) : async ?Storage.ExternalBlob {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admin can view customer photos");
@@ -1203,12 +1182,16 @@ actor {
     customerPhotos.get(id);
   };
 
-  /// Admin-only access to list customer photo IDs for privacy protection
+  // Get all customer photos as array (accessible to all — for "Share With Us" display)
+  public query ({ caller }) func getCustomerPhotos() : async [Storage.ExternalBlob] {
+    customerPhotos.values().toArray();
+  };
+
+  // Admin-only access to list customer photo IDs
   public query ({ caller }) func getAllCustomerPhotoIds() : async [Nat] {
     if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
       Runtime.trap("Unauthorized: Only admin can view customer photo IDs");
     };
-    let photoIds = customerPhotos.keys().toArray();
-    photoIds;
+    customerPhotos.keys().toArray();
   };
 };

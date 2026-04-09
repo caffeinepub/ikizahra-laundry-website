@@ -155,33 +155,37 @@ export interface UserProfile { 'name' : string, 'phoneNumber' : string }
 export type UserRole = { 'admin' : null } |
   { 'user' : null } |
   { 'guest' : null };
-export interface _CaffeineStorageCreateCertificateResult {
+export interface _ImmutableObjectStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
 }
-export interface _CaffeineStorageRefillInformation {
+export interface _ImmutableObjectStorageRefillInformation {
   'proposed_top_up_amount' : [] | [bigint],
 }
-export interface _CaffeineStorageRefillResult {
+export interface _ImmutableObjectStorageRefillResult {
   'success' : [] | [boolean],
   'topped_up_amount' : [] | [bigint],
 }
 export interface _SERVICE {
-  '_caffeineStorageBlobIsLive' : ActorMethod<[Uint8Array], boolean>,
-  '_caffeineStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
-  '_caffeineStorageConfirmBlobDeletion' : ActorMethod<
+  '_immutableObjectStorageBlobsAreLive' : ActorMethod<
+    [Array<Uint8Array>],
+    Array<boolean>
+  >,
+  '_immutableObjectStorageBlobsToDelete' : ActorMethod<[], Array<Uint8Array>>,
+  '_immutableObjectStorageConfirmBlobDeletion' : ActorMethod<
     [Array<Uint8Array>],
     undefined
   >,
-  '_caffeineStorageCreateCertificate' : ActorMethod<
+  '_immutableObjectStorageCreateCertificate' : ActorMethod<
     [string],
-    _CaffeineStorageCreateCertificateResult
+    _ImmutableObjectStorageCreateCertificateResult
   >,
-  '_caffeineStorageRefillCashier' : ActorMethod<
-    [[] | [_CaffeineStorageRefillInformation]],
-    _CaffeineStorageRefillResult
+  '_immutableObjectStorageRefillCashier' : ActorMethod<
+    [[] | [_ImmutableObjectStorageRefillInformation]],
+    _ImmutableObjectStorageRefillResult
   >,
-  '_caffeineStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
+  '_immutableObjectStorageUpdateGatewayPrincipals' : ActorMethod<[], undefined>,
+  '_initializeAccessControl' : ActorMethod<[], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createService' : ActorMethod<
     [string, string, bigint, ServiceCategory],
@@ -203,9 +207,6 @@ export interface _SERVICE {
     Array<StoreSubcategoryService>
   >,
   'getAllContactFormEntries' : ActorMethod<[], Array<ContactFormEntry>>,
-  /**
-   * / Admin-only access to list customer photo IDs for privacy protection
-   */
   'getAllCustomerPhotoIds' : ActorMethod<[], Array<bigint>>,
   'getAllProcessedImages' : ActorMethod<[], Array<ProcessedImage>>,
   'getAllServices' : ActorMethod<[], Array<Service>>,
@@ -221,10 +222,8 @@ export interface _SERVICE {
   'getColorHarmony' : ActorMethod<[], [] | [ColorHarmony]>,
   'getContactFormEntry' : ActorMethod<[bigint], [] | [ContactFormEntry]>,
   'getContactInfo' : ActorMethod<[], ContactInfo>,
-  /**
-   * / Admin-only access to view customer photos for privacy protection
-   */
   'getCustomerPhoto' : ActorMethod<[bigint], [] | [ExternalBlob]>,
+  'getCustomerPhotos' : ActorMethod<[], Array<ExternalBlob>>,
   'getExtendedThemeConfig' : ActorMethod<[], [] | [ExtendedThemeConfig]>,
   'getGradients' : ActorMethod<[], Array<GradientConfig>>,
   'getHeaderStyleConfig' : ActorMethod<[], [] | [HeaderStyleConfig]>,
@@ -232,6 +231,7 @@ export interface _SERVICE {
   'getInStoreSubcategoriesCount' : ActorMethod<[], [bigint, bigint]>,
   'getOrderedGalleryImages' : ActorMethod<[], Array<ProcessedImage>>,
   'getPhotoBackgroundImage' : ActorMethod<[], [] | [ExternalBlob]>,
+  'getQrCodeCaption' : ActorMethod<[], string>,
   'getService' : ActorMethod<[bigint], [] | [Service]>,
   'getServicesByCategory' : ActorMethod<[ServiceCategory], Array<Service>>,
   'getServicesByStoreSubcategory' : ActorMethod<
@@ -246,7 +246,6 @@ export interface _SERVICE {
   'getThemeConfig' : ActorMethod<[], [] | [ThemeConfig]>,
   'getTitleGradient' : ActorMethod<[], GradientConfig>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
-  'initializeAccessControl' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isDemoModeActive' : ActorMethod<[], boolean>,
   'isDemoStateSet' : ActorMethod<[], boolean>,
@@ -269,6 +268,7 @@ export interface _SERVICE {
   'setDemoState' : ActorMethod<[], undefined>,
   'setExtendedThemeConfig' : ActorMethod<[ExtendedThemeConfig], undefined>,
   'setHeaderStyleConfig' : ActorMethod<[HeaderStyleConfig], undefined>,
+  'setQrCodeCaption' : ActorMethod<[string], undefined>,
   'setThemeConfig' : ActorMethod<[ThemeConfig], undefined>,
   'submitContactForm' : ActorMethod<[string, string, string], bigint>,
   'updateContactInfo' : ActorMethod<
@@ -293,10 +293,19 @@ export interface _SERVICE {
     [string, string, [] | [ExternalBlob]],
     undefined
   >,
-  /**
-   * / PUBLIC API FOR CUSTOMER PHOTOS (Shared with #anon)
-   */
   'uploadCustomerPhoto' : ActorMethod<[ExternalBlob], bigint>,
+  'uploadGalleryImage' : ActorMethod<
+    [
+      [] | [ExternalBlob],
+      string,
+      AspectRatioOption,
+      bigint,
+      [] | [string],
+      [] | [bigint],
+      [] | [bigint],
+    ],
+    bigint
+  >,
   'uploadHeroImage' : ActorMethod<
     [
       [] | [ExternalBlob],
@@ -359,6 +368,30 @@ export interface _SERVICE {
     undefined
   >,
   'uploadProcessedStoreSubcategoryServiceImage' : ActorMethod<
+    [
+      bigint,
+      [] | [ExternalBlob],
+      AspectRatioOption,
+      bigint,
+      [] | [string],
+      [] | [bigint],
+      [] | [bigint],
+    ],
+    undefined
+  >,
+  'uploadServiceImage' : ActorMethod<
+    [
+      bigint,
+      [] | [ExternalBlob],
+      AspectRatioOption,
+      bigint,
+      [] | [string],
+      [] | [bigint],
+      [] | [bigint],
+    ],
+    undefined
+  >,
+  'uploadStoreSubcategoryServiceImage' : ActorMethod<
     [
       bigint,
       [] | [ExternalBlob],

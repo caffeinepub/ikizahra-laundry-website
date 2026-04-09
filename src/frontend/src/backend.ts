@@ -89,12 +89,6 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface ShadowConfig {
-    blurRadius: bigint;
-    color: string;
-    offsetX: bigint;
-    offsetY: bigint;
-}
 export interface ProcessedImage {
     id: bigint;
     optimizedUrl?: string;
@@ -109,18 +103,15 @@ export interface ProcessedImage {
     aspectRatio: AspectRatioOption;
 }
 export type Time = bigint;
-export interface _CaffeineStorageRefillInformation {
-    proposed_top_up_amount?: bigint;
-}
 export interface TextureConfig {
     patternType: string;
     scale: bigint;
     colorOverlay: string;
     intensity: bigint;
 }
-export interface _CaffeineStorageCreateCertificateResult {
-    method: string;
-    blob_hash: string;
+export interface _ImmutableObjectStorageRefillResult {
+    success?: boolean;
+    topped_up_amount?: bigint;
 }
 export interface ColorHarmony {
     accent: string;
@@ -175,6 +166,9 @@ export interface ResponsiveConfig {
     mobilePadding: bigint;
     tabletPadding: bigint;
 }
+export interface _ImmutableObjectStorageRefillInformation {
+    proposed_top_up_amount?: bigint;
+}
 export interface Service {
     id: bigint;
     name: string;
@@ -183,6 +177,10 @@ export interface Service {
     category: ServiceCategory;
     image?: ProcessedImage;
     price: bigint;
+}
+export interface _ImmutableObjectStorageCreateCertificateResult {
+    method: string;
+    blob_hash: string;
 }
 export interface ThemeConfig {
     harmonyLevel: bigint;
@@ -223,9 +221,11 @@ export interface UserProfile {
     name: string;
     phoneNumber: string;
 }
-export interface _CaffeineStorageRefillResult {
-    success?: boolean;
-    topped_up_amount?: bigint;
+export interface ShadowConfig {
+    blurRadius: bigint;
+    color: string;
+    offsetX: bigint;
+    offsetY: bigint;
 }
 export enum AspectRatioOption {
     square = "square",
@@ -260,12 +260,13 @@ export enum UserRole {
     guest = "guest"
 }
 export interface backendInterface {
-    _caffeineStorageBlobIsLive(hash: Uint8Array): Promise<boolean>;
-    _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>>;
-    _caffeineStorageConfirmBlobDeletion(blobs: Array<Uint8Array>): Promise<void>;
-    _caffeineStorageCreateCertificate(blobHash: string): Promise<_CaffeineStorageCreateCertificateResult>;
-    _caffeineStorageRefillCashier(refillInformation: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult>;
-    _caffeineStorageUpdateGatewayPrincipals(): Promise<void>;
+    _immutableObjectStorageBlobsAreLive(hashes: Array<Uint8Array>): Promise<Array<boolean>>;
+    _immutableObjectStorageBlobsToDelete(): Promise<Array<Uint8Array>>;
+    _immutableObjectStorageConfirmBlobDeletion(blobs: Array<Uint8Array>): Promise<void>;
+    _immutableObjectStorageCreateCertificate(blobHash: string): Promise<_ImmutableObjectStorageCreateCertificateResult>;
+    _immutableObjectStorageRefillCashier(refillInformation: _ImmutableObjectStorageRefillInformation | null): Promise<_ImmutableObjectStorageRefillResult>;
+    _immutableObjectStorageUpdateGatewayPrincipals(): Promise<void>;
+    _initializeAccessControl(): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
     createService(name: string, description: string, price: bigint, category: ServiceCategory): Promise<bigint>;
     createStoreSubcategoryService(name: string, description: string, price: bigint, subcategory: StoreServiceCategory): Promise<bigint>;
@@ -275,9 +276,6 @@ export interface backendInterface {
     getAllActiveServicesByCategory(category: ServiceCategory): Promise<Array<Service>>;
     getAllActiveStoreSubcategoryServicesBySubcategory(subcategory: StoreServiceCategory): Promise<Array<StoreSubcategoryService>>;
     getAllContactFormEntries(): Promise<Array<ContactFormEntry>>;
-    /**
-     * / Admin-only access to list customer photo IDs for privacy protection
-     */
     getAllCustomerPhotoIds(): Promise<Array<bigint>>;
     getAllProcessedImages(): Promise<Array<ProcessedImage>>;
     getAllServices(): Promise<Array<Service>>;
@@ -290,10 +288,8 @@ export interface backendInterface {
     getColorHarmony(): Promise<ColorHarmony | null>;
     getContactFormEntry(id: bigint): Promise<ContactFormEntry | null>;
     getContactInfo(): Promise<ContactInfo>;
-    /**
-     * / Admin-only access to view customer photos for privacy protection
-     */
     getCustomerPhoto(id: bigint): Promise<ExternalBlob | null>;
+    getCustomerPhotos(): Promise<Array<ExternalBlob>>;
     getExtendedThemeConfig(): Promise<ExtendedThemeConfig | null>;
     getGradients(): Promise<Array<GradientConfig>>;
     getHeaderStyleConfig(): Promise<HeaderStyleConfig | null>;
@@ -301,6 +297,7 @@ export interface backendInterface {
     getInStoreSubcategoriesCount(): Promise<[bigint, bigint]>;
     getOrderedGalleryImages(): Promise<Array<ProcessedImage>>;
     getPhotoBackgroundImage(): Promise<ExternalBlob | null>;
+    getQrCodeCaption(): Promise<string>;
     getService(id: bigint): Promise<Service | null>;
     getServicesByCategory(category: ServiceCategory): Promise<Array<Service>>;
     getServicesByStoreSubcategory(subcategory: StoreServiceCategory): Promise<Array<StoreSubcategoryService>>;
@@ -309,7 +306,6 @@ export interface backendInterface {
     getThemeConfig(): Promise<ThemeConfig | null>;
     getTitleGradient(): Promise<GradientConfig>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
-    initializeAccessControl(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     isDemoModeActive(): Promise<boolean>;
     isDemoStateSet(): Promise<boolean>;
@@ -320,6 +316,7 @@ export interface backendInterface {
     setDemoState(): Promise<void>;
     setExtendedThemeConfig(config: ExtendedThemeConfig): Promise<void>;
     setHeaderStyleConfig(config: HeaderStyleConfig): Promise<void>;
+    setQrCodeCaption(caption: string): Promise<void>;
     setThemeConfig(config: ThemeConfig): Promise<void>;
     submitContactForm(name: string, phone: string, message: string): Promise<bigint>;
     updateContactInfo(phone: string, whatsapp: string, address: string, hours: string): Promise<void>;
@@ -329,10 +326,8 @@ export interface backendInterface {
     updateStoreSubcategoryService(id: bigint, name: string, description: string, price: bigint): Promise<void>;
     updateStoreSubcategoryServiceWithoutImage(id: bigint, name: string, description: string, price: bigint): Promise<void>;
     uploadBanner(name: string, message: string, image: ExternalBlob | null): Promise<void>;
-    /**
-     * / PUBLIC API FOR CUSTOMER PHOTOS (Shared with #anon)
-     */
     uploadCustomerPhoto(photo: ExternalBlob): Promise<bigint>;
+    uploadGalleryImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadHeroImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadLogoImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadPhotoBackgroundImage(blob: ExternalBlob): Promise<void>;
@@ -340,91 +335,107 @@ export interface backendInterface {
     uploadProcessedGalleryImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadProcessedServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
     uploadProcessedStoreSubcategoryServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
+    uploadServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
+    uploadStoreSubcategoryServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
 }
-import type { AspectRatioOption as _AspectRatioOption, BackgroundTheme as _BackgroundTheme, BannerInfo as _BannerInfo, ColorHarmony as _ColorHarmony, ContactFormEntry as _ContactFormEntry, ExtendedThemeConfig as _ExtendedThemeConfig, ExternalBlob as _ExternalBlob, GradientConfig as _GradientConfig, HeaderStyleConfig as _HeaderStyleConfig, ImageType as _ImageType, LayoutConfig as _LayoutConfig, PatternType as _PatternType, ProcessedImage as _ProcessedImage, ResponsiveConfig as _ResponsiveConfig, Service as _Service, ServiceCategory as _ServiceCategory, ShadowConfig as _ShadowConfig, StoreServiceCategory as _StoreServiceCategory, StoreSubcategoryService as _StoreSubcategoryService, TextureConfig as _TextureConfig, ThemeConfig as _ThemeConfig, Time as _Time, TypographyConfig as _TypographyConfig, UserProfile as _UserProfile, UserRole as _UserRole, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
+import type { AspectRatioOption as _AspectRatioOption, BackgroundTheme as _BackgroundTheme, BannerInfo as _BannerInfo, ColorHarmony as _ColorHarmony, ContactFormEntry as _ContactFormEntry, ExtendedThemeConfig as _ExtendedThemeConfig, ExternalBlob as _ExternalBlob, GradientConfig as _GradientConfig, HeaderStyleConfig as _HeaderStyleConfig, ImageType as _ImageType, LayoutConfig as _LayoutConfig, PatternType as _PatternType, ProcessedImage as _ProcessedImage, ResponsiveConfig as _ResponsiveConfig, Service as _Service, ServiceCategory as _ServiceCategory, ShadowConfig as _ShadowConfig, StoreServiceCategory as _StoreServiceCategory, StoreSubcategoryService as _StoreSubcategoryService, TextureConfig as _TextureConfig, ThemeConfig as _ThemeConfig, Time as _Time, TypographyConfig as _TypographyConfig, UserProfile as _UserProfile, UserRole as _UserRole, _ImmutableObjectStorageRefillInformation as __ImmutableObjectStorageRefillInformation, _ImmutableObjectStorageRefillResult as __ImmutableObjectStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
     constructor(private actor: ActorSubclass<_SERVICE>, private _uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, private _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, private processError?: (error: unknown) => never){}
-    async _caffeineStorageBlobIsLive(arg0: Uint8Array): Promise<boolean> {
+    async _immutableObjectStorageBlobsAreLive(arg0: Array<Uint8Array>): Promise<Array<boolean>> {
         if (this.processError) {
             try {
-                const result = await this.actor._caffeineStorageBlobIsLive(arg0);
+                const result = await this.actor._immutableObjectStorageBlobsAreLive(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor._caffeineStorageBlobIsLive(arg0);
+            const result = await this.actor._immutableObjectStorageBlobsAreLive(arg0);
             return result;
         }
     }
-    async _caffeineStorageBlobsToDelete(): Promise<Array<Uint8Array>> {
+    async _immutableObjectStorageBlobsToDelete(): Promise<Array<Uint8Array>> {
         if (this.processError) {
             try {
-                const result = await this.actor._caffeineStorageBlobsToDelete();
+                const result = await this.actor._immutableObjectStorageBlobsToDelete();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor._caffeineStorageBlobsToDelete();
+            const result = await this.actor._immutableObjectStorageBlobsToDelete();
             return result;
         }
     }
-    async _caffeineStorageConfirmBlobDeletion(arg0: Array<Uint8Array>): Promise<void> {
+    async _immutableObjectStorageConfirmBlobDeletion(arg0: Array<Uint8Array>): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor._caffeineStorageConfirmBlobDeletion(arg0);
+                const result = await this.actor._immutableObjectStorageConfirmBlobDeletion(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor._caffeineStorageConfirmBlobDeletion(arg0);
+            const result = await this.actor._immutableObjectStorageConfirmBlobDeletion(arg0);
             return result;
         }
     }
-    async _caffeineStorageCreateCertificate(arg0: string): Promise<_CaffeineStorageCreateCertificateResult> {
+    async _immutableObjectStorageCreateCertificate(arg0: string): Promise<_ImmutableObjectStorageCreateCertificateResult> {
         if (this.processError) {
             try {
-                const result = await this.actor._caffeineStorageCreateCertificate(arg0);
+                const result = await this.actor._immutableObjectStorageCreateCertificate(arg0);
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor._caffeineStorageCreateCertificate(arg0);
+            const result = await this.actor._immutableObjectStorageCreateCertificate(arg0);
             return result;
         }
     }
-    async _caffeineStorageRefillCashier(arg0: _CaffeineStorageRefillInformation | null): Promise<_CaffeineStorageRefillResult> {
+    async _immutableObjectStorageRefillCashier(arg0: _ImmutableObjectStorageRefillInformation | null): Promise<_ImmutableObjectStorageRefillResult> {
         if (this.processError) {
             try {
-                const result = await this.actor._caffeineStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
-                return from_candid__CaffeineStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
+                const result = await this.actor._immutableObjectStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
+                return from_candid__ImmutableObjectStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor._caffeineStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
-            return from_candid__CaffeineStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
+            const result = await this.actor._immutableObjectStorageRefillCashier(to_candid_opt_n1(this._uploadFile, this._downloadFile, arg0));
+            return from_candid__ImmutableObjectStorageRefillResult_n4(this._uploadFile, this._downloadFile, result);
         }
     }
-    async _caffeineStorageUpdateGatewayPrincipals(): Promise<void> {
+    async _immutableObjectStorageUpdateGatewayPrincipals(): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor._caffeineStorageUpdateGatewayPrincipals();
+                const result = await this.actor._immutableObjectStorageUpdateGatewayPrincipals();
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor._caffeineStorageUpdateGatewayPrincipals();
+            const result = await this.actor._immutableObjectStorageUpdateGatewayPrincipals();
+            return result;
+        }
+    }
+    async _initializeAccessControl(): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor._initializeAccessControl();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor._initializeAccessControl();
             return result;
         }
     }
@@ -736,18 +747,32 @@ export class Backend implements backendInterface {
             return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getCustomerPhotos(): Promise<Array<ExternalBlob>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCustomerPhotos();
+                return from_candid_vec_n47(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCustomerPhotos();
+            return from_candid_vec_n47(this._uploadFile, this._downloadFile, result);
+        }
+    }
     async getExtendedThemeConfig(): Promise<ExtendedThemeConfig | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getExtendedThemeConfig();
-                return from_candid_opt_n47(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n48(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getExtendedThemeConfig();
-            return from_candid_opt_n47(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n48(this._uploadFile, this._downloadFile, result);
         }
     }
     async getGradients(): Promise<Array<GradientConfig>> {
@@ -768,27 +793,27 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getHeaderStyleConfig();
-                return from_candid_opt_n52(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n53(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getHeaderStyleConfig();
-            return from_candid_opt_n52(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n53(this._uploadFile, this._downloadFile, result);
         }
     }
     async getImagesByType(arg0: ImageType): Promise<Array<ProcessedImage>> {
         if (this.processError) {
             try {
-                const result = await this.actor.getImagesByType(to_candid_ImageType_n60(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.getImagesByType(to_candid_ImageType_n61(this._uploadFile, this._downloadFile, arg0));
                 return from_candid_vec_n34(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.getImagesByType(to_candid_ImageType_n60(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.getImagesByType(to_candid_ImageType_n61(this._uploadFile, this._downloadFile, arg0));
             return from_candid_vec_n34(this._uploadFile, this._downloadFile, result);
         }
     }
@@ -840,18 +865,32 @@ export class Backend implements backendInterface {
             return from_candid_opt_n25(this._uploadFile, this._downloadFile, result);
         }
     }
+    async getQrCodeCaption(): Promise<string> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getQrCodeCaption();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getQrCodeCaption();
+            return result;
+        }
+    }
     async getService(arg0: bigint): Promise<Service | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getService(arg0);
-                return from_candid_opt_n62(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getService(arg0);
-            return from_candid_opt_n62(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
         }
     }
     async getServicesByCategory(arg0: ServiceCategory): Promise<Array<Service>> {
@@ -900,28 +939,28 @@ export class Backend implements backendInterface {
         if (this.processError) {
             try {
                 const result = await this.actor.getStoreSubcategoryService(arg0);
-                return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n64(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getStoreSubcategoryService(arg0);
-            return from_candid_opt_n63(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n64(this._uploadFile, this._downloadFile, result);
         }
     }
     async getThemeConfig(): Promise<ThemeConfig | null> {
         if (this.processError) {
             try {
                 const result = await this.actor.getThemeConfig();
-                return from_candid_opt_n50(this._uploadFile, this._downloadFile, result);
+                return from_candid_opt_n51(this._uploadFile, this._downloadFile, result);
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
             const result = await this.actor.getThemeConfig();
-            return from_candid_opt_n50(this._uploadFile, this._downloadFile, result);
+            return from_candid_opt_n51(this._uploadFile, this._downloadFile, result);
         }
     }
     async getTitleGradient(): Promise<GradientConfig> {
@@ -950,20 +989,6 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n42(this._uploadFile, this._downloadFile, result);
-        }
-    }
-    async initializeAccessControl(): Promise<void> {
-        if (this.processError) {
-            try {
-                const result = await this.actor.initializeAccessControl();
-                return result;
-            } catch (e) {
-                this.processError(e);
-                throw new Error("unreachable");
-            }
-        } else {
-            const result = await this.actor.initializeAccessControl();
-            return result;
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -1025,14 +1050,14 @@ export class Backend implements backendInterface {
     async replaceGalleryImage(arg0: bigint, arg1: ExternalBlob | null, arg2: string | null, arg3: AspectRatioOption, arg4: bigint, arg5: string | null, arg6: bigint | null, arg7: bigint | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.replaceGalleryImage(arg0, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n66(this._uploadFile, this._downloadFile, arg2), to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg3), arg4, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg7));
+                const result = await this.actor.replaceGalleryImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n67(this._uploadFile, this._downloadFile, arg2), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg3), arg4, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg7));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.replaceGalleryImage(arg0, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n66(this._uploadFile, this._downloadFile, arg2), to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg3), arg4, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg7));
+            const result = await this.actor.replaceGalleryImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_opt_n67(this._uploadFile, this._downloadFile, arg2), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg3), arg4, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg7));
             return result;
         }
     }
@@ -1053,14 +1078,14 @@ export class Backend implements backendInterface {
     async setBackgroundTheme(arg0: BackgroundTheme): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setBackgroundTheme(to_candid_BackgroundTheme_n70(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.setBackgroundTheme(to_candid_BackgroundTheme_n71(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setBackgroundTheme(to_candid_BackgroundTheme_n70(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.setBackgroundTheme(to_candid_BackgroundTheme_n71(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
@@ -1081,28 +1106,42 @@ export class Backend implements backendInterface {
     async setExtendedThemeConfig(arg0: ExtendedThemeConfig): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setExtendedThemeConfig(to_candid_ExtendedThemeConfig_n74(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.setExtendedThemeConfig(to_candid_ExtendedThemeConfig_n75(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setExtendedThemeConfig(to_candid_ExtendedThemeConfig_n74(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.setExtendedThemeConfig(to_candid_ExtendedThemeConfig_n75(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
     async setHeaderStyleConfig(arg0: HeaderStyleConfig): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.setHeaderStyleConfig(to_candid_HeaderStyleConfig_n76(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.setHeaderStyleConfig(to_candid_HeaderStyleConfig_n77(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.setHeaderStyleConfig(to_candid_HeaderStyleConfig_n76(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.setHeaderStyleConfig(to_candid_HeaderStyleConfig_n77(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async setQrCodeCaption(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setQrCodeCaption(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setQrCodeCaption(arg0);
             return result;
         }
     }
@@ -1221,126 +1260,168 @@ export class Backend implements backendInterface {
     async uploadBanner(arg0: string, arg1: string, arg2: ExternalBlob | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadBanner(arg0, arg1, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg2));
+                const result = await this.actor.uploadBanner(arg0, arg1, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg2));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadBanner(arg0, arg1, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg2));
+            const result = await this.actor.uploadBanner(arg0, arg1, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg2));
             return result;
         }
     }
     async uploadCustomerPhoto(arg0: ExternalBlob): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadCustomerPhoto(await to_candid_ExternalBlob_n65(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.uploadCustomerPhoto(await to_candid_ExternalBlob_n66(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadCustomerPhoto(await to_candid_ExternalBlob_n65(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.uploadCustomerPhoto(await to_candid_ExternalBlob_n66(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async uploadGalleryImage(arg0: ExternalBlob | null, arg1: string, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<bigint> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.uploadGalleryImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.uploadGalleryImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
             return result;
         }
     }
     async uploadHeroImage(arg0: ExternalBlob | null, arg1: string, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadHeroImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+                const result = await this.actor.uploadHeroImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadHeroImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+            const result = await this.actor.uploadHeroImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
             return result;
         }
     }
     async uploadLogoImage(arg0: ExternalBlob | null, arg1: string, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadLogoImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+                const result = await this.actor.uploadLogoImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadLogoImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+            const result = await this.actor.uploadLogoImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
             return result;
         }
     }
     async uploadPhotoBackgroundImage(arg0: ExternalBlob): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadPhotoBackgroundImage(await to_candid_ExternalBlob_n65(this._uploadFile, this._downloadFile, arg0));
+                const result = await this.actor.uploadPhotoBackgroundImage(await to_candid_ExternalBlob_n66(this._uploadFile, this._downloadFile, arg0));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadPhotoBackgroundImage(await to_candid_ExternalBlob_n65(this._uploadFile, this._downloadFile, arg0));
+            const result = await this.actor.uploadPhotoBackgroundImage(await to_candid_ExternalBlob_n66(this._uploadFile, this._downloadFile, arg0));
             return result;
         }
     }
     async uploadProcessedContactBackgroundImage(arg0: ExternalBlob | null, arg1: string, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadProcessedContactBackgroundImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+                const result = await this.actor.uploadProcessedContactBackgroundImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadProcessedContactBackgroundImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+            const result = await this.actor.uploadProcessedContactBackgroundImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
             return result;
         }
     }
     async uploadProcessedGalleryImage(arg0: ExternalBlob | null, arg1: string, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<bigint> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadProcessedGalleryImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+                const result = await this.actor.uploadProcessedGalleryImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadProcessedGalleryImage(await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+            const result = await this.actor.uploadProcessedGalleryImage(await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg0), arg1, to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
             return result;
         }
     }
     async uploadProcessedServiceImage(arg0: bigint, arg1: ExternalBlob | null, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadProcessedServiceImage(arg0, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+                const result = await this.actor.uploadProcessedServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadProcessedServiceImage(arg0, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+            const result = await this.actor.uploadProcessedServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
             return result;
         }
     }
     async uploadProcessedStoreSubcategoryServiceImage(arg0: bigint, arg1: ExternalBlob | null, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<void> {
         if (this.processError) {
             try {
-                const result = await this.actor.uploadProcessedStoreSubcategoryServiceImage(arg0, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+                const result = await this.actor.uploadProcessedStoreSubcategoryServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
                 return result;
             } catch (e) {
                 this.processError(e);
                 throw new Error("unreachable");
             }
         } else {
-            const result = await this.actor.uploadProcessedStoreSubcategoryServiceImage(arg0, await to_candid_opt_n64(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n67(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n66(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n69(this._uploadFile, this._downloadFile, arg6));
+            const result = await this.actor.uploadProcessedStoreSubcategoryServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
+            return result;
+        }
+    }
+    async uploadServiceImage(arg0: bigint, arg1: ExternalBlob | null, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.uploadServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.uploadServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
+            return result;
+        }
+    }
+    async uploadStoreSubcategoryServiceImage(arg0: bigint, arg1: ExternalBlob | null, arg2: AspectRatioOption, arg3: bigint, arg4: string | null, arg5: bigint | null, arg6: bigint | null): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.uploadStoreSubcategoryServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.uploadStoreSubcategoryServiceImage(arg0, await to_candid_opt_n65(this._uploadFile, this._downloadFile, arg1), to_candid_AspectRatioOption_n68(this._uploadFile, this._downloadFile, arg2), arg3, to_candid_opt_n67(this._uploadFile, this._downloadFile, arg4), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg5), to_candid_opt_n70(this._uploadFile, this._downloadFile, arg6));
             return result;
         }
     }
@@ -1354,14 +1435,14 @@ function from_candid_BackgroundTheme_n35(_uploadFile: (file: ExternalBlob) => Pr
 async function from_candid_BannerInfo_n40(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _BannerInfo): Promise<BannerInfo> {
     return await from_candid_record_n41(_uploadFile, _downloadFile, value);
 }
-function from_candid_ExtendedThemeConfig_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExtendedThemeConfig): ExtendedThemeConfig {
-    return from_candid_record_n49(_uploadFile, _downloadFile, value);
+function from_candid_ExtendedThemeConfig_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExtendedThemeConfig): ExtendedThemeConfig {
+    return from_candid_record_n50(_uploadFile, _downloadFile, value);
 }
 async function from_candid_ExternalBlob_n26(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ExternalBlob): Promise<ExternalBlob> {
     return await _downloadFile(value);
 }
-function from_candid_HeaderStyleConfig_n53(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _HeaderStyleConfig): HeaderStyleConfig {
-    return from_candid_record_n54(_uploadFile, _downloadFile, value);
+function from_candid_HeaderStyleConfig_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _HeaderStyleConfig): HeaderStyleConfig {
+    return from_candid_record_n55(_uploadFile, _downloadFile, value);
 }
 function from_candid_ImageType_n23(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ImageType): ImageType {
     return from_candid_variant_n24(_uploadFile, _downloadFile, value);
@@ -1387,7 +1468,7 @@ async function from_candid_StoreSubcategoryService_n30(_uploadFile: (file: Exter
 function from_candid_UserRole_n43(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n44(_uploadFile, _downloadFile, value);
 }
-function from_candid__CaffeineStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __CaffeineStorageRefillResult): _CaffeineStorageRefillResult {
+function from_candid__ImmutableObjectStorageRefillResult_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: __ImmutableObjectStorageRefillResult): _ImmutableObjectStorageRefillResult {
     return from_candid_record_n5(_uploadFile, _downloadFile, value);
 }
 async function from_candid_opt_n19(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ProcessedImage]): Promise<ProcessedImage | null> {
@@ -1411,40 +1492,40 @@ function from_candid_opt_n45(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
 function from_candid_opt_n46(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ContactFormEntry]): ContactFormEntry | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExtendedThemeConfig]): ExtendedThemeConfig | null {
-    return value.length === 0 ? null : from_candid_ExtendedThemeConfig_n48(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n48(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ExtendedThemeConfig]): ExtendedThemeConfig | null {
+    return value.length === 0 ? null : from_candid_ExtendedThemeConfig_n49(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ThemeConfig]): ThemeConfig | null {
+function from_candid_opt_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ThemeConfig]): ThemeConfig | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n51(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_GradientConfig]): GradientConfig | null {
+function from_candid_opt_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_GradientConfig]): GradientConfig | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n52(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_HeaderStyleConfig]): HeaderStyleConfig | null {
-    return value.length === 0 ? null : from_candid_HeaderStyleConfig_n53(_uploadFile, _downloadFile, value[0]);
+function from_candid_opt_n53(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_HeaderStyleConfig]): HeaderStyleConfig | null {
+    return value.length === 0 ? null : from_candid_HeaderStyleConfig_n54(_uploadFile, _downloadFile, value[0]);
 }
-function from_candid_opt_n55(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ShadowConfig]): ShadowConfig | null {
+function from_candid_opt_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ShadowConfig]): ShadowConfig | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n56(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_LayoutConfig]): LayoutConfig | null {
+function from_candid_opt_n57(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_LayoutConfig]): LayoutConfig | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n57(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_TextureConfig]): TextureConfig | null {
+function from_candid_opt_n58(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_TextureConfig]): TextureConfig | null {
     return value.length === 0 ? null : value[0];
 }
-function from_candid_opt_n58(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ResponsiveConfig]): ResponsiveConfig | null {
-    return value.length === 0 ? null : value[0];
-}
-function from_candid_opt_n59(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_TypographyConfig]): TypographyConfig | null {
+function from_candid_opt_n59(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_ResponsiveConfig]): ResponsiveConfig | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [boolean]): boolean | null {
     return value.length === 0 ? null : value[0];
 }
-async function from_candid_opt_n62(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Service]): Promise<Service | null> {
+function from_candid_opt_n60(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_TypographyConfig]): TypographyConfig | null {
+    return value.length === 0 ? null : value[0];
+}
+async function from_candid_opt_n63(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_Service]): Promise<Service | null> {
     return value.length === 0 ? null : await from_candid_Service_n15(_uploadFile, _downloadFile, value[0]);
 }
-async function from_candid_opt_n63(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_StoreSubcategoryService]): Promise<StoreSubcategoryService | null> {
+async function from_candid_opt_n64(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_StoreSubcategoryService]): Promise<StoreSubcategoryService | null> {
     return value.length === 0 ? null : await from_candid_StoreSubcategoryService_n30(_uploadFile, _downloadFile, value[0]);
 }
 function from_candid_opt_n7(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [bigint]): bigint | null {
@@ -1576,7 +1657,19 @@ async function from_candid_record_n41(_uploadFile: (file: ExternalBlob) => Promi
         image: record_opt_to_undefined(await from_candid_opt_n25(_uploadFile, _downloadFile, value.image))
     };
 }
-function from_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+    success: [] | [boolean];
+    topped_up_amount: [] | [bigint];
+}): {
+    success?: boolean;
+    topped_up_amount?: bigint;
+} {
+    return {
+        success: record_opt_to_undefined(from_candid_opt_n6(_uploadFile, _downloadFile, value.success)),
+        topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
+    };
+}
+function from_candid_record_n50(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     harmonyLevel: bigint;
     theme: [] | [_ThemeConfig];
     gradient: [] | [_GradientConfig];
@@ -1593,26 +1686,14 @@ function from_candid_record_n49(_uploadFile: (file: ExternalBlob) => Promise<Uin
 } {
     return {
         harmonyLevel: value.harmonyLevel,
-        theme: record_opt_to_undefined(from_candid_opt_n50(_uploadFile, _downloadFile, value.theme)),
-        gradient: record_opt_to_undefined(from_candid_opt_n51(_uploadFile, _downloadFile, value.gradient)),
+        theme: record_opt_to_undefined(from_candid_opt_n51(_uploadFile, _downloadFile, value.theme)),
+        gradient: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.gradient)),
         luxuryPreset: value.luxuryPreset,
-        headerStyle: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.headerStyle)),
+        headerStyle: record_opt_to_undefined(from_candid_opt_n53(_uploadFile, _downloadFile, value.headerStyle)),
         colorHarmony: record_opt_to_undefined(from_candid_opt_n45(_uploadFile, _downloadFile, value.colorHarmony))
     };
 }
-function from_candid_record_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
-    success: [] | [boolean];
-    topped_up_amount: [] | [bigint];
-}): {
-    success?: boolean;
-    topped_up_amount?: bigint;
-} {
-    return {
-        success: record_opt_to_undefined(from_candid_opt_n6(_uploadFile, _downloadFile, value.success)),
-        topped_up_amount: record_opt_to_undefined(from_candid_opt_n7(_uploadFile, _downloadFile, value.topped_up_amount))
-    };
-}
-function from_candid_record_n54(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function from_candid_record_n55(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     shadow: [] | [_ShadowConfig];
     gradient: [] | [_GradientConfig];
     layout: [] | [_LayoutConfig];
@@ -1632,14 +1713,14 @@ function from_candid_record_n54(_uploadFile: (file: ExternalBlob) => Promise<Uin
     typography?: TypographyConfig;
 } {
     return {
-        shadow: record_opt_to_undefined(from_candid_opt_n55(_uploadFile, _downloadFile, value.shadow)),
-        gradient: record_opt_to_undefined(from_candid_opt_n51(_uploadFile, _downloadFile, value.gradient)),
-        layout: record_opt_to_undefined(from_candid_opt_n56(_uploadFile, _downloadFile, value.layout)),
+        shadow: record_opt_to_undefined(from_candid_opt_n56(_uploadFile, _downloadFile, value.shadow)),
+        gradient: record_opt_to_undefined(from_candid_opt_n52(_uploadFile, _downloadFile, value.gradient)),
+        layout: record_opt_to_undefined(from_candid_opt_n57(_uploadFile, _downloadFile, value.layout)),
         isResponsive: value.isResponsive,
-        texture: record_opt_to_undefined(from_candid_opt_n57(_uploadFile, _downloadFile, value.texture)),
-        responsive: record_opt_to_undefined(from_candid_opt_n58(_uploadFile, _downloadFile, value.responsive)),
+        texture: record_opt_to_undefined(from_candid_opt_n58(_uploadFile, _downloadFile, value.texture)),
+        responsive: record_opt_to_undefined(from_candid_opt_n59(_uploadFile, _downloadFile, value.responsive)),
         colorHarmony: record_opt_to_undefined(from_candid_opt_n45(_uploadFile, _downloadFile, value.colorHarmony)),
-        typography: record_opt_to_undefined(from_candid_opt_n59(_uploadFile, _downloadFile, value.typography))
+        typography: record_opt_to_undefined(from_candid_opt_n60(_uploadFile, _downloadFile, value.typography))
     };
 }
 function from_candid_variant_n18(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -1709,26 +1790,29 @@ async function from_candid_vec_n29(_uploadFile: (file: ExternalBlob) => Promise<
 async function from_candid_vec_n34(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ProcessedImage>): Promise<Array<ProcessedImage>> {
     return await Promise.all(value.map(async (x)=>await from_candid_ProcessedImage_n20(_uploadFile, _downloadFile, x)));
 }
-function to_candid_AspectRatioOption_n67(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: AspectRatioOption): _AspectRatioOption {
-    return to_candid_variant_n68(_uploadFile, _downloadFile, value);
+async function from_candid_vec_n47(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: Array<_ExternalBlob>): Promise<Array<ExternalBlob>> {
+    return await Promise.all(value.map(async (x)=>await from_candid_ExternalBlob_n26(_uploadFile, _downloadFile, x)));
 }
-function to_candid_BackgroundTheme_n70(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BackgroundTheme): _BackgroundTheme {
-    return to_candid_record_n71(_uploadFile, _downloadFile, value);
+function to_candid_AspectRatioOption_n68(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: AspectRatioOption): _AspectRatioOption {
+    return to_candid_variant_n69(_uploadFile, _downloadFile, value);
 }
-function to_candid_ExtendedThemeConfig_n74(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExtendedThemeConfig): _ExtendedThemeConfig {
-    return to_candid_record_n75(_uploadFile, _downloadFile, value);
+function to_candid_BackgroundTheme_n71(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: BackgroundTheme): _BackgroundTheme {
+    return to_candid_record_n72(_uploadFile, _downloadFile, value);
 }
-async function to_candid_ExternalBlob_n65(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
+function to_candid_ExtendedThemeConfig_n75(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExtendedThemeConfig): _ExtendedThemeConfig {
+    return to_candid_record_n76(_uploadFile, _downloadFile, value);
+}
+async function to_candid_ExternalBlob_n66(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob): Promise<_ExternalBlob> {
     return await _uploadFile(value);
 }
-function to_candid_HeaderStyleConfig_n76(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: HeaderStyleConfig): _HeaderStyleConfig {
-    return to_candid_record_n77(_uploadFile, _downloadFile, value);
+function to_candid_HeaderStyleConfig_n77(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: HeaderStyleConfig): _HeaderStyleConfig {
+    return to_candid_record_n78(_uploadFile, _downloadFile, value);
 }
-function to_candid_ImageType_n60(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ImageType): _ImageType {
-    return to_candid_variant_n61(_uploadFile, _downloadFile, value);
+function to_candid_ImageType_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ImageType): _ImageType {
+    return to_candid_variant_n62(_uploadFile, _downloadFile, value);
 }
-function to_candid_PatternType_n72(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PatternType): _PatternType {
-    return to_candid_variant_n73(_uploadFile, _downloadFile, value);
+function to_candid_PatternType_n73(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PatternType): _PatternType {
+    return to_candid_variant_n74(_uploadFile, _downloadFile, value);
 }
 function to_candid_ServiceCategory_n10(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ServiceCategory): _ServiceCategory {
     return to_candid_variant_n11(_uploadFile, _downloadFile, value);
@@ -1739,19 +1823,19 @@ function to_candid_StoreServiceCategory_n12(_uploadFile: (file: ExternalBlob) =>
 function to_candid_UserRole_n8(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: UserRole): _UserRole {
     return to_candid_variant_n9(_uploadFile, _downloadFile, value);
 }
-function to_candid__CaffeineStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation): __CaffeineStorageRefillInformation {
+function to_candid__ImmutableObjectStorageRefillInformation_n2(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ImmutableObjectStorageRefillInformation): __ImmutableObjectStorageRefillInformation {
     return to_candid_record_n3(_uploadFile, _downloadFile, value);
 }
-function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _CaffeineStorageRefillInformation | null): [] | [__CaffeineStorageRefillInformation] {
-    return value === null ? candid_none() : candid_some(to_candid__CaffeineStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
+function to_candid_opt_n1(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _ImmutableObjectStorageRefillInformation | null): [] | [__ImmutableObjectStorageRefillInformation] {
+    return value === null ? candid_none() : candid_some(to_candid__ImmutableObjectStorageRefillInformation_n2(_uploadFile, _downloadFile, value));
 }
-async function to_candid_opt_n64(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob | null): Promise<[] | [_ExternalBlob]> {
-    return value === null ? candid_none() : candid_some(await to_candid_ExternalBlob_n65(_uploadFile, _downloadFile, value));
+async function to_candid_opt_n65(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ExternalBlob | null): Promise<[] | [_ExternalBlob]> {
+    return value === null ? candid_none() : candid_some(await to_candid_ExternalBlob_n66(_uploadFile, _downloadFile, value));
 }
-function to_candid_opt_n66(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
+function to_candid_opt_n67(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: string | null): [] | [string] {
     return value === null ? candid_none() : candid_some(value);
 }
-function to_candid_opt_n69(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: bigint | null): [] | [bigint] {
+function to_candid_opt_n70(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: bigint | null): [] | [bigint] {
     return value === null ? candid_none() : candid_some(value);
 }
 function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
@@ -1763,7 +1847,7 @@ function to_candid_record_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8A
         proposed_top_up_amount: value.proposed_top_up_amount ? candid_some(value.proposed_top_up_amount) : candid_none()
     };
 }
-function to_candid_record_n71(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n72(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     pattern: PatternType;
     baseColor: string;
     patternIntensity: bigint;
@@ -1775,13 +1859,13 @@ function to_candid_record_n71(_uploadFile: (file: ExternalBlob) => Promise<Uint8
     transparencyLevel: bigint;
 } {
     return {
-        pattern: to_candid_PatternType_n72(_uploadFile, _downloadFile, value.pattern),
+        pattern: to_candid_PatternType_n73(_uploadFile, _downloadFile, value.pattern),
         baseColor: value.baseColor,
         patternIntensity: value.patternIntensity,
         transparencyLevel: value.transparencyLevel
     };
 }
-function to_candid_record_n75(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n76(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     harmonyLevel: bigint;
     theme?: ThemeConfig;
     gradient?: GradientConfig;
@@ -1801,11 +1885,11 @@ function to_candid_record_n75(_uploadFile: (file: ExternalBlob) => Promise<Uint8
         theme: value.theme ? candid_some(value.theme) : candid_none(),
         gradient: value.gradient ? candid_some(value.gradient) : candid_none(),
         luxuryPreset: value.luxuryPreset,
-        headerStyle: value.headerStyle ? candid_some(to_candid_HeaderStyleConfig_n76(_uploadFile, _downloadFile, value.headerStyle)) : candid_none(),
+        headerStyle: value.headerStyle ? candid_some(to_candid_HeaderStyleConfig_n77(_uploadFile, _downloadFile, value.headerStyle)) : candid_none(),
         colorHarmony: value.colorHarmony ? candid_some(value.colorHarmony) : candid_none()
     };
 }
-function to_candid_record_n77(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
+function to_candid_record_n78(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {
     shadow?: ShadowConfig;
     gradient?: GradientConfig;
     layout?: LayoutConfig;
@@ -1857,7 +1941,7 @@ function to_candid_variant_n13(_uploadFile: (file: ExternalBlob) => Promise<Uint
         selfService: null
     } : value;
 }
-function to_candid_variant_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ImageType): {
+function to_candid_variant_n62(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: ImageType): {
     service: null;
 } | {
     hero: null;
@@ -1884,7 +1968,7 @@ function to_candid_variant_n61(_uploadFile: (file: ExternalBlob) => Promise<Uint
         gallery: null
     } : value;
 }
-function to_candid_variant_n68(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: AspectRatioOption): {
+function to_candid_variant_n69(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: AspectRatioOption): {
     square: null;
 } | {
     portrait: null;
@@ -1903,7 +1987,7 @@ function to_candid_variant_n68(_uploadFile: (file: ExternalBlob) => Promise<Uint
         landscape: null
     } : value;
 }
-function to_candid_variant_n73(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PatternType): {
+function to_candid_variant_n74(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: PatternType): {
     waterRipples: null;
 } | {
     bubbles: null;

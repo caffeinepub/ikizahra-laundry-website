@@ -1,0 +1,309 @@
+type _ImmutableObjectStorageRefillResult = 
+ record {
+   success: opt bool;
+   topped_up_amount: opt nat;
+ };
+type _ImmutableObjectStorageRefillInformation = record {
+                                                  proposed_top_up_amount:
+                                                   opt nat;};
+type _ImmutableObjectStorageCreateCertificateResult = 
+ record {
+   blob_hash: text;
+   method: text;
+ };
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserProfile = 
+ record {
+   name: text;
+   phoneNumber: text;
+ };
+type TypographyConfig = 
+ record {
+   fontFamily: text;
+   fontSize: nat;
+   fontWeight: text;
+   letterSpacing: nat;
+ };
+type Time = int;
+type ThemeConfig = 
+ record {
+   colorHarmony: ColorHarmony;
+   gradients: vec GradientConfig;
+   harmonyLevel: nat;
+   luxuryPreset: bool;
+ };
+type TextureConfig = 
+ record {
+   colorOverlay: text;
+   intensity: nat;
+   patternType: text;
+   scale: nat;
+ };
+type StoreSubcategoryService = 
+ record {
+   description: text;
+   id: nat;
+   image: opt ProcessedImage;
+   isActive: bool;
+   name: text;
+   price: nat;
+   subcategory: StoreServiceCategory;
+ };
+type StoreServiceCategory = 
+ variant {
+   operatorService;
+   selfService;
+ };
+type ShadowConfig = 
+ record {
+   blurRadius: nat;
+   color: text;
+   offsetX: int;
+   offsetY: int;
+ };
+type ServiceCategory = 
+ variant {
+   inStore;
+   online;
+ };
+type Service = 
+ record {
+   category: ServiceCategory;
+   description: text;
+   id: nat;
+   image: opt ProcessedImage;
+   isActive: bool;
+   name: text;
+   price: nat;
+ };
+type ResponsiveConfig = 
+ record {
+   desktopFontSize: nat;
+   desktopPadding: nat;
+   mobileFontSize: nat;
+   mobilePadding: nat;
+   tabletFontSize: nat;
+   tabletPadding: nat;
+ };
+type ProcessedImage = 
+ record {
+   aspectRatio: AspectRatioOption;
+   description: text;
+   fileSizeBytes: nat;
+   id: nat;
+   image: opt ExternalBlob;
+   imageType: ImageType;
+   optimizedUrl: opt text;
+   originalHeight: opt nat;
+   originalWidth: opt nat;
+   sortOrder: nat;
+   uploadTime: Time;
+ };
+type PatternType = 
+ variant {
+   bubbles;
+   fabricTexture;
+   waterRipples;
+ };
+type LayoutConfig = 
+ record {
+   alignment: text;
+   borderRadius: nat;
+   margin: nat;
+   padding: nat;
+ };
+type ImageType = 
+ variant {
+   contactBackground;
+   gallery;
+   hero;
+   logo;
+   photoBackground;
+   "service";
+ };
+type HeaderStyleConfig = 
+ record {
+   colorHarmony: opt ColorHarmony;
+   gradient: opt GradientConfig;
+   isResponsive: bool;
+   layout: opt LayoutConfig;
+   responsive: opt ResponsiveConfig;
+   shadow: opt ShadowConfig;
+   texture: opt TextureConfig;
+   typography: opt TypographyConfig;
+ };
+type GradientConfig = 
+ record {
+   direction: text;
+   endColor: text;
+   intensity: nat;
+   startColor: text;
+ };
+type ExternalBlob = blob;
+type ExtendedThemeConfig = 
+ record {
+   colorHarmony: opt ColorHarmony;
+   gradient: opt GradientConfig;
+   harmonyLevel: nat;
+   headerStyle: opt HeaderStyleConfig;
+   luxuryPreset: bool;
+   theme: opt ThemeConfig;
+ };
+type ContactInfo = 
+ record {
+   address: text;
+   hours: text;
+   phone: text;
+   whatsapp: text;
+ };
+type ContactFormEntry = 
+ record {
+   id: nat;
+   message: text;
+   name: text;
+   phone: text;
+   timestamp: Time;
+ };
+type ColorHarmony = 
+ record {
+   accent: text;
+   primary: text;
+   secondary: text;
+ };
+type BannerInfo = 
+ record {
+   image: opt ExternalBlob;
+   message: text;
+   name: text;
+ };
+type BackgroundTheme = 
+ record {
+   baseColor: text;
+   pattern: PatternType;
+   patternIntensity: nat;
+   transparencyLevel: nat;
+ };
+type AspectRatioOption = 
+ variant {
+   landscape;
+   original;
+   portrait;
+   square;
+ };
+service : {
+  _immutableObjectStorageBlobsAreLive: (hashes: vec blob) -> (vec bool) query;
+  _immutableObjectStorageBlobsToDelete: () -> (vec blob) query;
+  _immutableObjectStorageConfirmBlobDeletion: (blobs: vec blob) -> ();
+  _immutableObjectStorageCreateCertificate: (blobHash: text) ->
+   (_ImmutableObjectStorageCreateCertificateResult);
+  _immutableObjectStorageRefillCashier: (refillInformation:
+   opt _ImmutableObjectStorageRefillInformation) ->
+   (_ImmutableObjectStorageRefillResult);
+  _immutableObjectStorageUpdateGatewayPrincipals: () -> ();
+  _initializeAccessControl: () -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  createService: (name: text, description: text, price: nat, category:
+   ServiceCategory) -> (nat);
+  createStoreSubcategoryService: (name: text, description: text, price: 
+   nat, subcategory: StoreServiceCategory) -> (nat);
+  deleteGalleryImage: (imageId: nat) -> ();
+  deleteService: (id: nat) -> ();
+  deleteStoreSubcategoryService: (id: nat) -> ();
+  getAllActiveServicesByCategory: (category: ServiceCategory) ->
+   (vec Service) query;
+  getAllActiveStoreSubcategoryServicesBySubcategory: (subcategory:
+   StoreServiceCategory) -> (vec StoreSubcategoryService) query;
+  getAllContactFormEntries: () -> (vec ContactFormEntry) query;
+  getAllCustomerPhotoIds: () -> (vec nat) query;
+  getAllProcessedImages: () -> (vec ProcessedImage) query;
+  getAllServices: () -> (vec Service) query;
+  getAllStoreSubcategoryServices: () -> (vec StoreSubcategoryService) query;
+  getBackgroundTheme: () -> (BackgroundTheme) query;
+  getBanner: () -> (opt BannerInfo) query;
+  getButtonGradient: () -> (GradientConfig) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getColorHarmony: () -> (opt ColorHarmony) query;
+  getContactFormEntry: (id: nat) -> (opt ContactFormEntry) query;
+  getContactInfo: () -> (ContactInfo) query;
+  getCustomerPhoto: (id: nat) -> (opt ExternalBlob) query;
+  getCustomerPhotos: () -> (vec ExternalBlob) query;
+  getExtendedThemeConfig: () -> (opt ExtendedThemeConfig) query;
+  getGradients: () -> (vec GradientConfig) query;
+  getHeaderStyleConfig: () -> (opt HeaderStyleConfig) query;
+  getImagesByType: (imageType: ImageType) -> (vec ProcessedImage) query;
+  getInStoreSubcategoriesCount: () -> (nat, nat) query;
+  getOrderedGalleryImages: () -> (vec ProcessedImage) query;
+  getPhotoBackgroundImage: () -> (opt ExternalBlob) query;
+  getQrCodeCaption: () -> (text) query;
+  getService: (id: nat) -> (opt Service) query;
+  getServicesByCategory: (category: ServiceCategory) -> (vec Service) query;
+  getServicesByStoreSubcategory: (subcategory: StoreServiceCategory) ->
+   (vec StoreSubcategoryService) query;
+  getStaticDescription: () -> (text) query;
+  getStoreSubcategoryService: (id: nat) ->
+   (opt StoreSubcategoryService) query;
+  getThemeConfig: () -> (opt ThemeConfig) query;
+  getTitleGradient: () -> (GradientConfig) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  isCallerAdmin: () -> (bool) query;
+  isDemoModeActive: () -> (bool) query;
+  isDemoStateSet: () -> (bool) query;
+  removePhotoBackgroundImage: () -> ();
+  replaceGalleryImage: (imageId: nat, newImage: opt ExternalBlob, desc:
+   opt text, aspectRatio: AspectRatioOption, fileSizeBytes: nat,
+   optimizedUrl: opt text, width: opt nat, height: opt nat) -> ();
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  setBackgroundTheme: (bgTheme: BackgroundTheme) -> ();
+  setDemoState: () -> ();
+  setExtendedThemeConfig: (config: ExtendedThemeConfig) -> ();
+  setHeaderStyleConfig: (config: HeaderStyleConfig) -> ();
+  setQrCodeCaption: (caption: text) -> ();
+  setThemeConfig: (config: ThemeConfig) -> ();
+  submitContactForm: (name: text, phone: text, message: text) -> (nat);
+  updateContactInfo: (phone: text, whatsapp: text, address: text, hours:
+   text) -> ();
+  updateImageDescription: (id: nat, newDesc: text) -> ();
+  updateService: (id: nat, name: text, description: text, price: nat) -> ();
+  updateServiceWithoutImage: (id: nat, name: text, description: text, price:
+   nat) -> ();
+  updateStoreSubcategoryService: (id: nat, name: text, description: text,
+   price: nat) -> ();
+  updateStoreSubcategoryServiceWithoutImage: (id: nat, name: text,
+   description: text, price: nat) -> ();
+  uploadBanner: (name: text, message: text, image: opt ExternalBlob) -> ();
+  uploadCustomerPhoto: (photo: ExternalBlob) -> (nat);
+  uploadGalleryImage: (image: opt ExternalBlob, desc: text, aspectRatio:
+   AspectRatioOption, fileSizeBytes: nat, optimizedUrl: opt text, width:
+   opt nat, height: opt nat) -> (nat);
+  uploadHeroImage: (image: opt ExternalBlob, desc: text, aspectRatio:
+   AspectRatioOption, fileSizeBytes: nat, optimizedUrl: opt text, width:
+   opt nat, height: opt nat) -> (nat);
+  uploadLogoImage: (image: opt ExternalBlob, desc: text, aspectRatio:
+   AspectRatioOption, fileSizeBytes: nat, optimizedUrl: opt text, width:
+   opt nat, height: opt nat) -> (nat);
+  uploadPhotoBackgroundImage: ("blob": ExternalBlob) -> ();
+  uploadProcessedContactBackgroundImage: (image: opt ExternalBlob, desc:
+   text, aspectRatio: AspectRatioOption, fileSizeBytes: nat, optimizedUrl:
+   opt text, width: opt nat, height: opt nat) -> (nat);
+  uploadProcessedGalleryImage: (image: opt ExternalBlob, desc: text,
+   aspectRatio: AspectRatioOption, fileSizeBytes: nat, optimizedUrl:
+   opt text, width: opt nat, height: opt nat) -> (nat);
+  uploadProcessedServiceImage: (id: nat, image: opt ExternalBlob,
+   aspectRatio: AspectRatioOption, fileSizeBytes: nat, optimizedUrl:
+   opt text, width: opt nat, height: opt nat) -> ();
+  uploadProcessedStoreSubcategoryServiceImage: (id: nat, image:
+   opt ExternalBlob, aspectRatio: AspectRatioOption, fileSizeBytes: nat,
+   optimizedUrl: opt text, width: opt nat, height: opt nat) -> ();
+  uploadServiceImage: (id: nat, image: opt ExternalBlob, aspectRatio:
+   AspectRatioOption, fileSizeBytes: nat, optimizedUrl: opt text, width:
+   opt nat, height: opt nat) -> ();
+  uploadStoreSubcategoryServiceImage: (id: nat, image: opt ExternalBlob,
+   aspectRatio: AspectRatioOption, fileSizeBytes: nat, optimizedUrl:
+   opt text, width: opt nat, height: opt nat) -> ();
+}

@@ -609,3 +609,31 @@ export function useRemovePhotoBackgroundImage() {
     },
   });
 }
+
+export function useGetQrCodeCaption() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<string>({
+    queryKey: ["qrCodeCaption"],
+    queryFn: async () => {
+      if (!actor) return "";
+      return actor.getQrCodeCaption();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSetQrCodeCaption() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (caption: string) => {
+      if (!actor) throw new Error("Actor not initialized");
+      return actor.setQrCodeCaption(caption);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["qrCodeCaption"] });
+    },
+  });
+}

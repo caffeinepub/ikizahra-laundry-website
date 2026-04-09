@@ -14,12 +14,6 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-export interface ShadowConfig {
-    blurRadius: bigint;
-    color: string;
-    offsetX: bigint;
-    offsetY: bigint;
-}
 export interface ProcessedImage {
     id: bigint;
     optimizedUrl?: string;
@@ -141,6 +135,12 @@ export interface UserProfile {
     name: string;
     phoneNumber: string;
 }
+export interface ShadowConfig {
+    blurRadius: bigint;
+    color: string;
+    offsetX: bigint;
+    offsetY: bigint;
+}
 export enum AspectRatioOption {
     square = "square",
     portrait = "portrait",
@@ -183,9 +183,6 @@ export interface backendInterface {
     getAllActiveServicesByCategory(category: ServiceCategory): Promise<Array<Service>>;
     getAllActiveStoreSubcategoryServicesBySubcategory(subcategory: StoreServiceCategory): Promise<Array<StoreSubcategoryService>>;
     getAllContactFormEntries(): Promise<Array<ContactFormEntry>>;
-    /**
-     * / Admin-only access to list customer photo IDs for privacy protection
-     */
     getAllCustomerPhotoIds(): Promise<Array<bigint>>;
     getAllProcessedImages(): Promise<Array<ProcessedImage>>;
     getAllServices(): Promise<Array<Service>>;
@@ -198,10 +195,8 @@ export interface backendInterface {
     getColorHarmony(): Promise<ColorHarmony | null>;
     getContactFormEntry(id: bigint): Promise<ContactFormEntry | null>;
     getContactInfo(): Promise<ContactInfo>;
-    /**
-     * / Admin-only access to view customer photos for privacy protection
-     */
     getCustomerPhoto(id: bigint): Promise<ExternalBlob | null>;
+    getCustomerPhotos(): Promise<Array<ExternalBlob>>;
     getExtendedThemeConfig(): Promise<ExtendedThemeConfig | null>;
     getGradients(): Promise<Array<GradientConfig>>;
     getHeaderStyleConfig(): Promise<HeaderStyleConfig | null>;
@@ -209,6 +204,7 @@ export interface backendInterface {
     getInStoreSubcategoriesCount(): Promise<[bigint, bigint]>;
     getOrderedGalleryImages(): Promise<Array<ProcessedImage>>;
     getPhotoBackgroundImage(): Promise<ExternalBlob | null>;
+    getQrCodeCaption(): Promise<string>;
     getService(id: bigint): Promise<Service | null>;
     getServicesByCategory(category: ServiceCategory): Promise<Array<Service>>;
     getServicesByStoreSubcategory(subcategory: StoreServiceCategory): Promise<Array<StoreSubcategoryService>>;
@@ -217,7 +213,6 @@ export interface backendInterface {
     getThemeConfig(): Promise<ThemeConfig | null>;
     getTitleGradient(): Promise<GradientConfig>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
-    initializeAccessControl(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     isDemoModeActive(): Promise<boolean>;
     isDemoStateSet(): Promise<boolean>;
@@ -228,6 +223,7 @@ export interface backendInterface {
     setDemoState(): Promise<void>;
     setExtendedThemeConfig(config: ExtendedThemeConfig): Promise<void>;
     setHeaderStyleConfig(config: HeaderStyleConfig): Promise<void>;
+    setQrCodeCaption(caption: string): Promise<void>;
     setThemeConfig(config: ThemeConfig): Promise<void>;
     submitContactForm(name: string, phone: string, message: string): Promise<bigint>;
     updateContactInfo(phone: string, whatsapp: string, address: string, hours: string): Promise<void>;
@@ -237,10 +233,8 @@ export interface backendInterface {
     updateStoreSubcategoryService(id: bigint, name: string, description: string, price: bigint): Promise<void>;
     updateStoreSubcategoryServiceWithoutImage(id: bigint, name: string, description: string, price: bigint): Promise<void>;
     uploadBanner(name: string, message: string, image: ExternalBlob | null): Promise<void>;
-    /**
-     * / PUBLIC API FOR CUSTOMER PHOTOS (Shared with #anon)
-     */
     uploadCustomerPhoto(photo: ExternalBlob): Promise<bigint>;
+    uploadGalleryImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadHeroImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadLogoImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadPhotoBackgroundImage(blob: ExternalBlob): Promise<void>;
@@ -248,4 +242,6 @@ export interface backendInterface {
     uploadProcessedGalleryImage(image: ExternalBlob | null, desc: string, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<bigint>;
     uploadProcessedServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
     uploadProcessedStoreSubcategoryServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
+    uploadServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
+    uploadStoreSubcategoryServiceImage(id: bigint, image: ExternalBlob | null, aspectRatio: AspectRatioOption, fileSizeBytes: bigint, optimizedUrl: string | null, width: bigint | null, height: bigint | null): Promise<void>;
 }
